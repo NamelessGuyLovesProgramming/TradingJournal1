@@ -1,29 +1,25 @@
+# src/main.py - Angepasst für lokale Dateispeicherung
+
 import os
 import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory
-from src.models import db
-from src.routes.journal_routes import journal_bp
-from src.routes.entry_routes import entry_bp
-from src.routes.stats_routes import stats_bp
+from flask import Flask, send_from_directory, jsonify
+from src import data_storage  # Importiere das neue Modul statt SQLAlchemy
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
+# Importiere die Route-Definitionen
+from src.routes.journal_routes import journal_bp
+from src.routes.entry_routes import entry_bp
+from src.routes.stats_routes import stats_bp
+
+# Registriere die Blueprints
 app.register_blueprint(journal_bp, url_prefix='/api')
 app.register_blueprint(entry_bp, url_prefix='/api')
 app.register_blueprint(stats_bp, url_prefix='/api')
-
-# uncomment if you need to use database
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('DB_USERNAME', 'root')}:{os.getenv('DB_PASSWORD', 'password')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '3306')}/{os.getenv('DB_NAME', 'mydb')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
-with app.app_context():
-    # WARNING: This drops all tables! Use with caution in production.
-    db.drop_all() # Uncomment temporarily for development schema changes
-    db.create_all()
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -41,6 +37,15 @@ def serve(path):
         else:
             return "index.html not found", 404
 
+# Route zum Bereitstellen hochgeladener Dateien
+@app.route('/api/uploads/<path:filename>')
+def serve_upload(filename):
+    upload_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'uploads')
+    # Sicherheitsprüfung: sicherstellen, dass der Dateiname sicher ist
+    safe_path = os.path.abspath(os.path.join(upload_dir, filename))
+    if not safe_path.startswith(os.path.abspath(upload_dir)):
+        return jsonify({"error": "Ungültiger Dateipfad"}), 400
+    return send_from_directory(upload_dir, filename)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

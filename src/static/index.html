@@ -31,7 +31,7 @@
         <!-- Modal/Form for Adding/Editing Journal -->
         <div id="journal-modal" class="modal">
             <div class="modal-content">
-                <span class="close-btn" onclick="closeModal("journal-modal")">&times;</span>
+                <span class="close-btn" onclick="closeModal('journal-modal')">&times;</span>
                 <h3 id="journal-modal-title">Neues Journal erstellen</h3>
                 <input type="hidden" id="journal-edit-id">
                 <label for="journal-name">Name:</label>
@@ -40,6 +40,17 @@
                 <textarea id="journal-description"></textarea>
                 <label for="journal-has-sl-tp">SL/TP Felder anzeigen?</label>
                 <input type="checkbox" id="journal-has-sl-tp">
+
+                <!-- Neues benutzerdefiniertes Feld -->
+                <label for="journal-has-custom-field">Benutzerdefiniertes Feld anzeigen?</label>
+                <input type="checkbox" id="journal-has-custom-field">
+                <div id="custom-field-options" style="display: none;">
+                    <label for="journal-custom-field-name">Feldname:</label>
+                    <input type="text" id="journal-custom-field-name" placeholder="z.B. Marktphase, Zeitrahmen, etc.">
+                    <label for="journal-custom-field-options">Optionen (eine pro Zeile):</label>
+                    <textarea id="journal-custom-field-options" rows="3" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+                </div>
+
                 <h4>Standard Checklistenpunkte (einer pro Zeile):</h4>
                 <textarea id="journal-checklist-templates" rows="5" placeholder="Trade mit dem Gesamttrend?
 Trade mit dem 15-Minuten-Trend?
@@ -52,7 +63,7 @@ Trade mit dem 15-Minuten-Trend?
         <!-- Modal/Form for Managing Checklist Templates -->
         <div id="checklist-modal" class="modal">
             <div class="modal-content">
-                <span class="close-btn" onclick="closeModal("checklist-modal")">&times;</span>
+                <span class="close-btn" onclick="closeModal('checklist-modal')">&times;</span>
                 <h3>Checkliste für <span id="checklist-journal-name"></span> verwalten</h3>
                 <ul id="checklist-template-list"></ul>
                 <div>
@@ -65,7 +76,7 @@ Trade mit dem 15-Minuten-Trend?
         <!-- Modal/Form for Adding/Editing Entry -->
         <div id="entry-modal" class="modal">
             <div class="modal-content large">
-                <span class="close-btn" onclick="closeModal("entry-modal")">&times;</span>
+                <span class="close-btn" onclick="closeModal('entry-modal')">&times;</span>
                 <h3 id="entry-modal-title">Neuer Eintrag</h3>
                 <input type="hidden" id="entry-edit-id">
                 <input type="hidden" id="entry-journal-id">
@@ -86,8 +97,14 @@ Trade mit dem 15-Minuten-Trend?
                             <option value="Short">Short</option>
                         </select>
 
-                        <label for="entry-strategy">Strategie (optional):</label> <!-- Optional -->
-                        <input type="text" id="entry-strategy">
+                        <label for="entry-strategy">Strategie:</label> <!-- Dropdown statt Textfeld -->
+                        <div class="strategy-input">
+                            <select id="entry-strategy-select">
+                                <option value="">-- Auswählen --</option>
+                                <!-- Optionen werden dynamisch geladen -->
+                            </select>
+                            <button type="button" id="add-new-strategy-btn">+</button>
+                        </div>
 
                         <label for="entry-initial-rr">Initial R/R:
                             <span class="info-tooltip" title="Risk/Reward Ratio zu Beginn des Trades (z.B. 1.5 für 1:1.5)">ⓘ</span>
@@ -113,6 +130,15 @@ Trade mit dem 15-Minuten-Trend?
                             <input type="number" step="any" id="entry-tp">
                         </div>
 
+                        <!-- Neues benutzerdefiniertes Feld -->
+                        <div id="custom-field" style="display: none;">
+                            <label for="entry-custom-field" id="custom-field-label">Benutzerdefiniertes Feld:</label>
+                            <select id="entry-custom-field">
+                                <option value="">-- Auswählen --</option>
+                                <!-- Optionen werden dynamisch geladen -->
+                            </select>
+                        </div>
+
                         <label for="entry-confidence">Konfidenzniveau:</label>
                         <input type="range" id="entry-confidence" min="1" max="100" value="50">
                         <span id="confidence-value">50</span>
@@ -136,7 +162,6 @@ Trade mit dem 15-Minuten-Trend?
                         <div class="image-upload-area">
                             <label for="entry-image-category">Kategorie:</label>
                             <select id="entry-image-category">
-                                <option value="General">Allgemein</option>
                                 <option value="Before">Vorher</option>
                                 <option value="After">Nachher</option>
                             </select>
@@ -150,8 +175,6 @@ Trade mit dem 15-Minuten-Trend?
                         <div id="entry-images-preview-before" class="image-preview-section"></div>
                         <h5>Nachher:</h5>
                         <div id="entry-images-preview-after" class="image-preview-section"></div>
-                        <h5>Allgemein:</h5>
-                        <div id="entry-images-preview-general" class="image-preview-section"></div>
                     </div>
                 </div>
 
@@ -160,10 +183,21 @@ Trade mit dem 15-Minuten-Trend?
             </div>
         </div>
 
+        <!-- Neues Modal für neue Strategie hinzufügen -->
+        <div id="strategy-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('strategy-modal')">&times;</span>
+                <h3>Neue Strategie hinzufügen</h3>
+                <label for="new-strategy-name">Name der Strategie:</label>
+                <input type="text" id="new-strategy-name">
+                <button id="save-strategy-btn">Strategie speichern</button>
+            </div>
+        </div>
+
         <!-- Statistics Modal -->
         <div id="stats-modal" class="modal">
             <div class="modal-content large">
-                <span class="close-btn" onclick="closeModal("stats-modal")">&times;</span>
+                <span class="close-btn" onclick="closeModal('stats-modal')">&times;</span>
                 <h3>Statistiken für <span id="stats-journal-name"></span></h3>
                 <div id="stats-content">
                     <!-- Statistics will be loaded here -->
@@ -174,7 +208,7 @@ Trade mit dem 15-Minuten-Trend?
 
         <!-- Lightbox Modal -->
         <div id="lightbox-modal" class="modal lightbox">
-            <span class="close-btn lightbox-close" onclick="closeModal("lightbox-modal")">&times;</span>
+            <span class="close-btn lightbox-close" onclick="closeModal('lightbox-modal')">&times;</span>
             <img class="lightbox-content" id="lightbox-img">
             <div id="lightbox-caption"></div>
         </div>
