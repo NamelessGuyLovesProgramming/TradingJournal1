@@ -6,10 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="cf4835e3-b952-4e54-8fcf-c2b5f8c8041c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/JournalSelector.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/JournalSelector.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/JournalDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/JournalDetail.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Statistics.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Statistics.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/Index.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
