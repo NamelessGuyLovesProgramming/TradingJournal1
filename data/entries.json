@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "id": 1,
+    "journal_id": 1,
+    "entry_date": "2025-05-03T13:54:00.000Z",
+    "symbol": "NQ1",
+    "position_type": "Long",
+    "strategy": null,
+    "initial_rr": null,
+    "pnl": null,
+    "result": null,
+    "confidence_level": 50,
+    "trade_rating": 3,
+    "notes": "",
+    "stop_loss": null,
+    "take_profit": null,
+    "custom_field_value": null
+  }
+]
