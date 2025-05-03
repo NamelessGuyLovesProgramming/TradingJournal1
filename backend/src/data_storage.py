@@ -719,6 +719,65 @@ def calculate_strategy_performance(entries):
 
     return results
 
+# This goes in src/data_storage.py
+# Function to delete a journal and all its related data
+
+def delete_journal(journal_id):
+    """Löscht ein Journal und alle zugehörigen Daten."""
+    journals = load_data(JOURNALS_FILE)
+    journals = [j for j in journals if j['id'] != journal_id]
+    save_data(JOURNALS_FILE, journals)
+
+    # Lösche zugehörige Vorlagen
+    templates = load_data(TEMPLATES_FILE)
+    templates = [t for t in templates if t['journal_id'] != journal_id]
+    save_data(TEMPLATES_FILE, templates)
+
+    # Finde Einträge, die zum Journal gehören
+    entries = load_data(ENTRIES_FILE)
+    entry_ids = [e['id'] for e in entries if e['journal_id'] == journal_id]
+    entries = [e for e in entries if e['journal_id'] != journal_id]
+    save_data(ENTRIES_FILE, entries)
+
+    # Lösche Checklistenstatus und Bilder für die Einträge
+    delete_related_entry_data(entry_ids)
+
+    return True
+
+def delete_entry(entry_id):
+    """Löscht einen Eintrag und zugehörige Daten."""
+    entries = load_data(ENTRIES_FILE)
+    entries = [e for e in entries if e['id'] != entry_id]
+    save_data(ENTRIES_FILE, entries)
+
+    delete_related_entry_data([entry_id])
+
+    return True
+
+def delete_related_entry_data(entry_ids):
+    """Löscht alle mit den Einträgen verbundenen Daten."""
+    if not entry_ids:
+        return
+
+    # Lösche Checklistenstatus
+    statuses = load_data(STATUSES_FILE)
+    statuses = [s for s in statuses if s['entry_id'] not in entry_ids]
+    save_data(STATUSES_FILE, statuses)
+
+    # Lösche Bilder und Dateien
+    images = load_data(IMAGES_FILE)
+    to_delete = [i for i in images if i['entry_id'] in entry_ids]
+
+    for img in to_delete:
+        file_path = os.path.join(UPLOADS_DIR, img['file_path'])
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except OSError as e:
+            print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
+
+    images = [i for i in images if i['entry_id'] not in entry_ids]
+    save_data(IMAGES_FILE, images)
 
 # Initialisierung
 init_data_files()

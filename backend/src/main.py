@@ -6,10 +6,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, jsonify
-from src import data_storage  # Importiere das neue Modul statt SQLAlchemy
+from flask_cors import CORS  # Add this import
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+CORS(app)  # Enable CORS for all routes
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+
 
 # Importiere die Route-Definitionen
 from src.routes.journal_routes import journal_bp
