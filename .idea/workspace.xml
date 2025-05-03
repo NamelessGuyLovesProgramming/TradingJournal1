@@ -7,9 +7,15 @@
     <list default="true" id="cf4835e3-b952-4e54-8fcf-c2b5f8c8041c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/entries.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/entries.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/data/strategies.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/strategies.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/images.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/images.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/journals.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/journals.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/statuses.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/statuses.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/templates.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/templates.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/uploads/fec2e876d1b24a44af140e7cb1538c92_newplot.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/data_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/data_storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/JournalForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/JournalForm.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/JournalDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/JournalDetail.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Statistics.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Statistics.js" afterDir="false" />
     </list>

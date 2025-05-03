@@ -110,6 +110,17 @@ const EntryDetail = () => {
     }
   };
 
+  // Get emotion color based on the emotion type
+  const getEmotionColor = (emotion) => {
+    const positiveEmotions = ['Calm', 'Confident', 'Focused', 'Satisfaction', 'Relief'];
+    const negativeEmotions = ['Fear', 'Greed', 'FOMO', 'Revenge', 'Anxiety', 'Frustration', 'Impatience', 'Anger', 'Disappointment'];
+    const neutralEmotions = ['Hesitant', 'Boredom', 'Excitement', 'Indecision', 'Overconfidence', 'Neutral'];
+
+    if (positiveEmotions.includes(emotion)) return 'success';
+    if (negativeEmotions.includes(emotion)) return 'error';
+    return 'info'; // For neutral emotions
+  };
+
   // Group images by category
   const imagesByCategory = {
     Before: entry.images?.filter(img => img.category === 'Before') || [],
@@ -202,6 +213,18 @@ const EntryDetail = () => {
                     <Typography variant="body1">{entry.take_profit !== null ? entry.take_profit : 'N/A'}</Typography>
                   </Grid>
                 </>
+              )}
+
+              {/* Display emotion if enabled and present */}
+              {currentJournal?.has_emotions && entry.emotion && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary">Emotional State</Typography>
+                  <Chip
+                    label={entry.emotion}
+                    color={getEmotionColor(entry.emotion)}
+                    size="small"
+                  />
+                </Grid>
               )}
 
               {currentJournal?.has_custom_field && entry.custom_field_value && (

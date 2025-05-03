@@ -1,4 +1,4 @@
-// src/components/EntryForm.js
+// src/components/EntryForm.js - Updated with emotions field
 import React, { useState, useEffect } from 'react';
 import {
   TextField,
@@ -34,6 +34,30 @@ const positionTypes = ['Long', 'Short'];
 const tradeResults = ['Win', 'Loss', 'BE', 'PartialBE'];
 const imageCategories = ['Before', 'After'];
 
+// Common trading emotions
+const tradingEmotions = [
+  'Calm',
+  'Confident',
+  'Focused',
+  'Hesitant',
+  'Fear',
+  'Greed',
+  'FOMO',
+  'Revenge',
+  'Boredom',
+  'Excitement',
+  'Indecision',
+  'Anxiety',
+  'Overconfidence',
+  'Frustration',
+  'Impatience',
+  'Anger',
+  'Disappointment',
+  'Satisfaction',
+  'Relief',
+  'Neutral'
+];
+
 const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
   const [formData, setFormData] = useState({
     entry_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
@@ -49,6 +73,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
     stop_loss: '',
     take_profit: '',
     custom_field_value: '',
+    emotion: '', // New field for emotion
     checklist_statuses: {}
   });
 
@@ -382,6 +407,23 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
                 />
               </Grid>
             </Grid>
+          )}
+
+          {/* New Emotions Field */}
+          {journalSettings?.has_emotions && (
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Emotional State</InputLabel>
+              <Select
+                name="emotion"
+                value={formData.emotion}
+                onChange={handleChange}
+              >
+                <MenuItem value="">-- Select --</MenuItem>
+                {tradingEmotions.map(emotion => (
+                  <MenuItem key={emotion} value={emotion}>{emotion}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           )}
 
           {journalSettings?.has_custom_field && (

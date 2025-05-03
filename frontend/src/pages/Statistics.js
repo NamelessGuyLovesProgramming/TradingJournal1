@@ -363,7 +363,166 @@ const Statistics = () => {
           <Tab label="Sitzungen" />
           <Tab label="Kalender" />
           <Tab label="Checklist Einfluss" />
+          <Tab label="Emotionen" /> {/* New tab for emotions */}
         </Tabs>
+
+        <TabPanel value={tabValue} index={4}>
+          {stats.emotion_performance && stats.emotion_performance.length > 0 ? (
+            <>
+              <Typography variant="h5" gutterBottom>Emotionaler Einfluss auf dein Trading</Typography>
+              <Typography variant="body2" paragraph>
+                Diese Analyse zeigt, wie verschiedene emotionale Zustände deine Trading-Performance beeinflussen.
+                Erkenne Muster zwischen deinen Emotionen und Trading-Ergebnissen.
+              </Typography>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Box height={300}>
+                    <Bar
+                      data={{
+                        labels: stats.emotion_performance.map(item => item.emotion),
+                        datasets: [
+                          {
+                            label: 'Win Rate (%)',
+                            data: stats.emotion_performance.map(item => item.win_rate),
+                            backgroundColor: stats.emotion_performance.map(item =>
+                              item.win_rate >= 50 ? 'rgba(46, 204, 113, 0.7)' : 'rgba(231, 76, 60, 0.7)'
+                            ),
+                            borderColor: stats.emotion_performance.map(item =>
+                              item.win_rate >= 50 ? 'rgba(46, 204, 113, 1)' : 'rgba(231, 76, 60, 1)'
+                            ),
+                            borderWidth: 1,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                          legend: {
+                            display: false
+                          },
+                          title: {
+                            display: true,
+                            text: 'Gewinnrate nach emotionalem Zustand (%)'
+                          }
+                        },
+                        scales: {
+                          x: {
+                            beginAtZero: true,
+                            max: 100
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Emotion</TableCell>
+                          <TableCell align="right">Trades</TableCell>
+                          <TableCell align="right">Gewinne</TableCell>
+                          <TableCell align="right">Verluste</TableCell>
+                          <TableCell align="right">Gewinnrate</TableCell>
+                          <TableCell align="right">Durchschn. P&L</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {stats.emotion_performance.map((item) => (
+                          <TableRow key={item.emotion}>
+                            <TableCell>{item.emotion}</TableCell>
+                            <TableCell align="right">{item.count}</TableCell>
+                            <TableCell align="right">{item.wins}</TableCell>
+                            <TableCell align="right">{item.losses}</TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{ color: item.win_rate >= 50 ? 'success.main' : 'error.main' }}
+                            >
+                              {item.win_rate.toFixed(1)}%
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{ color: item.avg_pnl >= 0 ? 'success.main' : 'error.main' }}
+                            >
+                              {item.avg_pnl.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+              </Grid>
+
+              <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>Erkenntnisse über emotionale Muster</Typography>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="body1" paragraph>
+                  <strong>Beste emotionale Zustände:</strong> Die Daten zeigen, dass deine höchste Gewinnrate bei den folgenden emotionalen Zuständen auftritt:
+                  {stats.emotion_performance
+                    .filter(item => item.count >= 3 && item.win_rate >= 50)
+                    .sort((a, b) => b.win_rate - a.win_rate)
+                    .slice(0, 3)
+                    .map((item, index) => (
+                      <Chip
+                        key={index}
+                        label={`${item.emotion} (${item.win_rate.toFixed(1)}%)`}
+                        color="success"
+                        sx={{ ml: 1, mr: 1 }}
+                      />
+                    ))
+                  }
+                </Typography>
+
+                <Typography variant="body1" paragraph>
+                  <strong>Emotionale Zustände zu vermeiden:</strong> Die folgenden emotionalen Zustände sind mit deinen schlechtesten Ergebnissen verbunden:
+                  {stats.emotion_performance
+                    .filter(item => item.count >= 3)
+                    .sort((a, b) => a.win_rate - b.win_rate)
+                    .slice(0, 3)
+                    .map((item, index) => (
+                      <Chip
+                        key={index}
+                        label={`${item.emotion} (${item.win_rate.toFixed(1)}%)`}
+                        color="error"
+                        sx={{ ml: 1, mr: 1 }}
+                      />
+                    ))
+                  }
+                </Typography>
+
+                <Typography variant="body1">
+                  <strong>Empfehlung:</strong> Basierend auf deinen Daten scheint dein Trading am erfolgreichsten zu sein, wenn du in einem
+                  {stats.emotion_performance
+                    .filter(item => item.count >= 3 && item.win_rate >= 60)
+                    .sort((a, b) => b.win_rate - a.win_rate)
+                    .slice(0, 1)
+                    .map((item) => (
+                      <strong key={item.emotion}> {item.emotion.toLowerCase()} </strong>
+                    ))
+                  }
+                  Zustand handelst. Überlegungen zum Handel, wenn du dich
+                  {stats.emotion_performance
+                    .filter(item => item.count >= 3 && item.win_rate < 40)
+                    .sort((a, b) => a.win_rate - b.win_rate)
+                    .slice(0, 1)
+                    .map((item) => (
+                      <strong key={item.emotion}> {item.emotion.toLowerCase()} </strong>
+                    ))
+                  }
+                  fühlst, könnten deine Gesamtperformance verbessern.
+                </Typography>
+              </Paper>
+            </>
+          ) : (
+            <Typography variant="body1">
+              Keine Emotionsdaten verfügbar. Aktiviere das Emotions-Tracking in den Journal-Einstellungen und beginne, deine emotionalen Zustände zu erfassen.
+            </Typography>
+          )}
+        </TabPanel>
 
         {/* Übersichts-Tab mit den ursprünglichen Statistiken */}
         <TabPanel value={tabValue} index={0}>

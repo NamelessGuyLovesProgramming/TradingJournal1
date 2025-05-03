@@ -21,6 +21,7 @@ const JournalForm = ({ journal, onComplete }) => {
     has_custom_field: journal?.has_custom_field || false,
     custom_field_name: journal?.custom_field_name || '',
     custom_field_options: journal?.custom_field_options ? journal.custom_field_options.join('\n') : '',
+    has_emotions: journal?.has_emotions || false, // New field for emotions tracking
     checklist_templates: '',
   });
   const [loading, setLoading] = useState(false);
@@ -106,6 +107,18 @@ const JournalForm = ({ journal, onComplete }) => {
               />
             }
             label="Show Stop Loss/Take Profit Fields"
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formData.has_emotions}
+                onChange={handleChange}
+                name="has_emotions"
+              />
+            }
+            label="Track Trading Emotions"
           />
         </Grid>
         <Grid item xs={12}>

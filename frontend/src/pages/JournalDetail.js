@@ -219,6 +219,12 @@ const JournalDetail = () => {
                     </Typography>
                   )}
 
+                    {currentJournal.has_emotions && entry.emotion && (
+                      <Typography variant="body2" mt={1}>
+                        Emotion: {entry.emotion}
+                      </Typography>
+                    )}
+
                   {currentJournal.has_custom_field && entry.custom_field_value && (
                     <Typography variant="body2" mt={1}>
                       {currentJournal.custom_field_name}: {entry.custom_field_value}

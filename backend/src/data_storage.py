@@ -100,9 +100,10 @@ def create_journal(data):
         'name': data['name'],
         'description': data.get('description', ''),
         'has_sl_tp_fields': data.get('has_sl_tp_fields', False),
-        'has_custom_field': data.get('has_custom_field', False),  # Neues Feld für benutzerdefiniertes Dropdown
-        'custom_field_name': data.get('custom_field_name', ''),  # Name des benutzerdefinierten Feldes
-        'custom_field_options': data.get('custom_field_options', []),  # Optionen für das benutzerdefinierte Feld
+        'has_custom_field': data.get('has_custom_field', False),
+        'custom_field_name': data.get('custom_field_name', ''),
+        'custom_field_options': data.get('custom_field_options', []),
+        'has_emotions': data.get('has_emotions', False),  # New field for emotions tracking
         'created_at': current_time
     }
 
@@ -129,6 +130,54 @@ def create_journal(data):
 
     return new_journal
 
+def calculate_emotion_performance(entries):
+    """Berechnet die Performance nach emotionalen Zuständen."""
+    emotion_data = {}
+
+    for entry in entries:
+        emotion = entry.get('emotion')
+        if not emotion:
+            continue
+
+        if emotion not in emotion_data:
+            emotion_data[emotion] = {'count': 0, 'wins': 0, 'losses': 0, 'pnl': 0}
+
+        emotion_data[emotion]['count'] += 1
+
+        if entry.get('result') == "Win":
+            emotion_data[emotion]['wins'] += 1
+        elif entry.get('result') == "Loss":
+            emotion_data[emotion]['losses'] += 1
+
+        # Füge PnL hinzu, wenn vorhanden
+        if entry.get('pnl') is not None:
+            pnl = entry.get('pnl')
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue
+            emotion_data[emotion]['pnl'] += pnl
+
+    results = []
+    for emotion, data in emotion_data.items():
+        win_rate = (data['wins'] / data['count'] * 100) if data['count'] > 0 else 0
+        avg_pnl = data['pnl'] / data['count'] if data['count'] > 0 else 0
+
+        results.append({
+            'emotion': emotion,
+            'count': data['count'],
+            'wins': data['wins'],
+            'losses': data['losses'],
+            'win_rate': win_rate,
+            'total_pnl': data['pnl'],
+            'avg_pnl': avg_pnl
+        })
+
+    # Sortiere nach Anzahl der Einträge (absteigend)
+    results.sort(key=lambda x: x['count'], reverse=True)
+
+    return results
 
 def update_journal(journal_id, data):
     """Aktualisiert ein bestehendes Journal."""
@@ -147,6 +196,8 @@ def update_journal(journal_id, data):
                 journal['custom_field_name'] = data['custom_field_name']
             if 'custom_field_options' in data:
                 journal['custom_field_options'] = data['custom_field_options']
+            if 'has_emotions' in data:
+                journal['has_emotions'] = data['has_emotions']
 
             save_data(JOURNALS_FILE, journals)
             return journal
@@ -346,7 +397,8 @@ def create_entry(journal_id, data):
         'notes': data.get('notes'),
         'stop_loss': data.get('stop_loss'),
         'take_profit': data.get('take_profit'),
-        'custom_field_value': data.get('custom_field_value')  # Neues benutzerdefiniertes Feldwert
+        'custom_field_value': data.get('custom_field_value'),
+        'emotion': data.get('emotion')  # New emotion field
     }
 
     entries.append(new_entry)
@@ -383,7 +435,7 @@ def update_entry(entry_id, data):
             # Aktualisiere die Felder
             fields = ['symbol', 'position_type', 'strategy', 'initial_rr', 'pnl', 'result',
                       'confidence_level', 'trade_rating', 'notes', 'stop_loss', 'take_profit',
-                      'custom_field_value']  # Aktualisiert für das benutzerdefinierte Feld
+                      'custom_field_value', 'emotion']
 
             for field in fields:
                 if field in data:
@@ -628,6 +680,14 @@ def get_journal_statistics(journal_id):
     strategy_stats = calculate_strategy_performance(entries)
 
     journal = get_journal(journal_id)
+    # Neue Statistiken
+    session_stats = calculate_session_performance(entries)
+    daily_stats = calculate_daily_performance(entries)
+    monthly_stats = calculate_monthly_performance(entries)
+    checklist_win_rate = calculate_checklist_win_rates(journal_id, entries)
+    emotion_stats = calculate_emotion_performance(entries)  # New: emotion statistics
+
+    journal = get_journal(journal_id)
 
     return {
         'journal_name': journal['name'] if journal else "",
@@ -649,7 +709,13 @@ def get_journal_statistics(journal_id):
         'average_initial_rr': round(avg_rr, 1) if avg_rr is not None else None,
         'checklist_usage': checklist_usage,
         'symbol_performance': symbol_stats,
-        'strategy_performance': strategy_stats  # Neue Strategie-Statistiken
+        'strategy_performance': strategy_stats,
+        # Statistiken
+        'session_performance': session_stats,
+        'daily_performance': daily_stats,
+        'monthly_performance': monthly_stats,
+        'checklist_win_rates': checklist_win_rate,
+        'emotion_performance': emotion_stats  # New: include emotion statistics
     }
 
 
@@ -736,9 +802,15 @@ def calculate_strategy_performance(entries):
         elif entry.get('result') == "Loss":
             strategy_data[strategy]['losses'] += 1
 
-        # Füge PnL hinzu, wenn vorhanden
+        # Füge PnL hinzu, wenn vorhanden, mit Konvertierung von String zu Float
         if entry.get('pnl') is not None:
-            strategy_data[strategy]['pnl'] += entry.get('pnl')
+            try:
+                # Konvertiere String zu Float, falls es ein String ist
+                pnl_value = float(entry.get('pnl')) if isinstance(entry.get('pnl'), str) else entry.get('pnl')
+                strategy_data[strategy]['pnl'] += pnl_value
+            except (ValueError, TypeError):
+                # Ignoriere ungültige Werte
+                pass
 
     results = []
     for strategy, data in strategy_data.items():
@@ -759,7 +831,6 @@ def calculate_strategy_performance(entries):
     results.sort(key=lambda x: x['count'], reverse=True)
 
     return results
-
 # This goes in src/data_storage.py
 # Function to delete a journal and all its related data
 
@@ -1041,8 +1112,15 @@ def calculate_daily_performance(entries):
         elif entry.get('result') == 'Loss':
             daily_data[date_key]["losses"] += 1
 
+        # PnL mit Typkonvertierung hinzufügen
         if entry.get('pnl') is not None:
-            daily_data[date_key]["pnl"] += entry.get('pnl')
+            try:
+                # Konvertiere den Wert zu einem Float, wenn es ein String ist
+                pnl_value = float(entry.get('pnl')) if isinstance(entry.get('pnl'), str) else entry.get('pnl')
+                daily_data[date_key]["pnl"] += pnl_value
+            except (ValueError, TypeError):
+                # Ignoriere ungültige Werte
+                pass
 
     # Ergebnisse für Wochentage
     weekday_results = []
@@ -1080,7 +1158,6 @@ def calculate_daily_performance(entries):
         "calendar": calendar_results
     }
 
-
 def calculate_monthly_performance(entries):
     """Berechnet die Performance nach Monaten."""
     monthly_data = {}
@@ -1108,8 +1185,15 @@ def calculate_monthly_performance(entries):
         elif entry.get('result') == 'Loss':
             monthly_data[month_key]["losses"] += 1
 
+        # PnL mit Typkonvertierung hinzufügen
         if entry.get('pnl') is not None:
-            monthly_data[month_key]["pnl"] += entry.get('pnl')
+            try:
+                # Konvertiere den Wert zu einem Float, wenn es ein String ist
+                pnl_value = float(entry.get('pnl')) if isinstance(entry.get('pnl'), str) else entry.get('pnl')
+                monthly_data[month_key]["pnl"] += pnl_value
+            except (ValueError, TypeError):
+                # Ignoriere ungültige Werte
+                pass
 
     # Ergebnisse nach Monaten
     results = []
@@ -1132,8 +1216,6 @@ def calculate_monthly_performance(entries):
     results.sort(key=lambda x: x["month"])
 
     return results
-
-
 def calculate_checklist_win_rates(journal_id, entries):
     """Berechnet die Gewinnrate für jedes Checklist-Item."""
     templates = get_checklist_templates(journal_id)
@@ -1206,6 +1288,8 @@ def calculate_checklist_win_rates(journal_id, entries):
     results.sort(key=lambda x: x["win_rate_diff"], reverse=True)
 
     return results
+
+
 
 # Initialisierung
 init_data_files()
