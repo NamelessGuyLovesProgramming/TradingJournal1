@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { getJournals } from '../api/apiClient';
 
 const JournalContext = createContext();
@@ -11,9 +11,10 @@ export const JournalProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchJournals = async () => {
+  // fetchJournals mit useCallback, um die Referenzstabilität zu gewährleisten
+  const fetchJournals = useCallback(async () => {
+    // Wir setzen loading nur auf true, wenn es noch nicht true ist
     try {
-      setLoading(true);
       const response = await getJournals();
       setJournals(response.data);
       setError(null);
@@ -23,16 +24,21 @@ export const JournalProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const selectJournal = (journalId) => {
+  const selectJournal = useCallback((journalId) => {
     const journal = journals.find(j => j.id === Number(journalId));
     setCurrentJournal(journal || null);
-  };
+  }, [journals]);
 
+  // Führe fetchJournals nur einmal beim ersten Rendern aus
   useEffect(() => {
     fetchJournals();
-  }, []);
+    // fetchJournals ist jetzt eine stabile Referenz und sollte keine Endlosschleife verursachen
+  }, [fetchJournals]);
+
+  // Debug-Code zum Nachverfolgen von Renderungen
+  console.log("JournalContext rendered, journals:", journals.length);
 
   return (
     <JournalContext.Provider
