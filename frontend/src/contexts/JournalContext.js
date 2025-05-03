@@ -10,11 +10,13 @@ export const JournalProvider = ({ children }) => {
   const [currentJournal, setCurrentJournal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Verwende einen Ref statt State um Endlosschleifen zu vermeiden
+  const fetchedRef = React.useRef(false);
 
-  // fetchJournals mit useCallback, um die Referenzstabilität zu gewährleisten
+  // fetchJournals mit useCallback, aber ohne Abhängigkeiten
   const fetchJournals = useCallback(async () => {
-    // Wir setzen loading nur auf true, wenn es noch nicht true ist
     try {
+      setLoading(true);
       const response = await getJournals();
       setJournals(response.data);
       setError(null);
@@ -24,21 +26,20 @@ export const JournalProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // Leeres Abhängigkeitsarray
 
   const selectJournal = useCallback((journalId) => {
     const journal = journals.find(j => j.id === Number(journalId));
     setCurrentJournal(journal || null);
   }, [journals]);
 
-  // Führe fetchJournals nur einmal beim ersten Rendern aus
+  // Verwende useRef, um nur einmal abzurufen
   useEffect(() => {
-    fetchJournals();
-    // fetchJournals ist jetzt eine stabile Referenz und sollte keine Endlosschleife verursachen
+    if (!fetchedRef.current) {
+      fetchJournals();
+      fetchedRef.current = true;
+    }
   }, [fetchJournals]);
-
-  // Debug-Code zum Nachverfolgen von Renderungen
-  console.log("JournalContext rendered, journals:", journals.length);
 
   return (
     <JournalContext.Provider

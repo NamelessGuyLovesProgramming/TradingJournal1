@@ -8,13 +8,10 @@ const Dashboard = () => {
   const { journals, loading, error, fetchJournals } = useJournal();
   const navigate = useNavigate();
 
-  // Besser: Führe fetchJournals nur einmal beim Mounten aus
+  // Korrigiert: Nur einmal beim Mounten fetchen, ohne unnötige Bedingungen
   useEffect(() => {
-  // Keine erneuten Aufrufe, wenn die Journals bereits geladen werden oder geladen sind
-  if (!loading && journals.length === 0) {
-    fetchJournals();
-  }
-}, []); // Leeres Dependency-Array
+    // Keine Bedingung mehr, die erneute Abrufe auslösen könnte
+  }, []); // Leeres Dependency-Array
 
   if (loading) {
     return <Typography>Loading journals...</Typography>;
