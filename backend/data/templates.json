@@ -4,5 +4,11 @@
     "journal_id": 1,
     "text": "Trade1",
     "order": 0
+  },
+  {
+    "id": 2,
+    "journal_id": 1,
+    "text": "15 Minuten Sweep",
+    "order": 1
   }
 ]

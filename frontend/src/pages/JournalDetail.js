@@ -19,8 +19,9 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
+import DeleteIcon from '@mui/icons-material/Delete'; // NEU: Import für Lösch-Icon
 import { format } from 'date-fns';
-import { getEntries } from '../api/apiClient';
+import { getEntries, deleteJournal } from '../api/apiClient'; // NEU: Import für deleteJournal
 import { useJournal } from '../contexts/JournalContext';
 import EntryForm from '../components/EntryForm';
 import JournalForm from '../components/JournalForm';
@@ -37,6 +38,7 @@ const JournalDetail = () => {
   const [openEntryDialog, setOpenEntryDialog] = useState(false);
   const [openSettingsDialog, setOpenSettingsDialog] = useState(false);
   const [openChecklistDialog, setOpenChecklistDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // NEU: State für Lösch-Dialog
 
   const fetchEntries = async () => {
     try {
@@ -62,6 +64,17 @@ const JournalDetail = () => {
   }, [journalId, selectJournal]);
 
   const currentJournal = journals.find(j => j.id === Number(journalId));
+
+  // NEU: Funktion zum Löschen des Journals
+  const handleDeleteJournal = async () => {
+    try {
+      await deleteJournal(journalId);
+      navigate('/');
+    } catch (err) {
+      setError('Failed to delete journal');
+      console.error(err);
+    }
+  };
 
   const getResultColor = (result) => {
     switch (result) {
@@ -118,6 +131,14 @@ const JournalDetail = () => {
             title="View Statistics"
           >
             <BarChartIcon />
+          </IconButton>
+          {/* NEU: Lösch-Button */}
+          <IconButton
+            color="error"
+            onClick={() => setOpenDeleteDialog(true)}
+            title="Journal löschen"
+          >
+            <DeleteIcon />
           </IconButton>
           <Button
             variant="contained"
@@ -260,6 +281,24 @@ const JournalDetail = () => {
         <DialogActions>
           <Button onClick={handleCloseChecklistDialog}>Close</Button>
         </DialogActions>
+      </Dialog>
+
+      {/* NEU: Journal-Löschdialog */}
+      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+        <DialogTitle>Journal löschen</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Bist du sicher, dass du dieses Journal löschen möchtest? Dies kann nicht rückgängig gemacht werden und alle Einträge werden ebenfalls gelöscht.
+          </Typography>
+        </DialogContent>
+        <Box display="flex" justifyContent="flex-end" p={2}>
+          <Button onClick={() => setOpenDeleteDialog(false)} sx={{ mr: 1 }}>
+            Abbrechen
+          </Button>
+          <Button onClick={handleDeleteJournal} color="error" variant="contained">
+            Löschen
+          </Button>
+        </Box>
       </Dialog>
     </Box>
   );

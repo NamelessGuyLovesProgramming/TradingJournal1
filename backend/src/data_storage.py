@@ -563,18 +563,59 @@ def get_journal_statistics(journal_id):
     short_positions = sum(1 for e in entries if e.get('position_type') == "Short")
 
     # PnL-Berechnungen
-    pnl_values = [e.get('pnl') for e in entries if e.get('pnl') is not None]
+    pnl_values = []
+    for e in entries:
+        pnl = e.get('pnl')
+        if pnl is not None:
+            # Konvertiere String-Werte in Floats
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue  # Überspringen von ungültigen Werten
+            pnl_values.append(pnl)
+
     total_pnl = sum(pnl_values)
     avg_pnl = total_pnl / total_trades if total_trades > 0 else 0
 
-    winning_pnls = [e.get('pnl') for e in entries if e.get('result') == "Win" and e.get('pnl') is not None]
-    losing_pnls = [e.get('pnl') for e in entries if e.get('result') == "Loss" and e.get('pnl') is not None]
+    # Gleiches für Gewinn- und Verlust-PnLs
+    winning_pnls = []
+    for e in entries:
+        if e.get('result') == "Win" and e.get('pnl') is not None:
+            pnl = e.get('pnl')
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue
+            winning_pnls.append(pnl)
+
+    losing_pnls = []
+    for e in entries:
+        if e.get('result') == "Loss" and e.get('pnl') is not None:
+            pnl = e.get('pnl')
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue
+            losing_pnls.append(pnl)
 
     avg_win_pnl = sum(winning_pnls) / len(winning_pnls) if winning_pnls else 0
     avg_loss_pnl = sum(losing_pnls) / len(losing_pnls) if losing_pnls else 0
 
     # R/R-Werte
-    rr_values = [e.get('initial_rr') for e in entries if e.get('initial_rr') is not None]
+    rr_values = []
+    for e in entries:
+        rr = e.get('initial_rr')
+        if rr is not None:
+            if isinstance(rr, str):
+                try:
+                    rr = float(rr)
+                except ValueError:
+                    continue
+            rr_values.append(rr)
+
     avg_rr = sum(rr_values) / len(rr_values) if rr_values else 0
 
     # Checklistennutzung
@@ -778,6 +819,393 @@ def delete_related_entry_data(entry_ids):
 
     images = [i for i in images if i['entry_id'] not in entry_ids]
     save_data(IMAGES_FILE, images)
+
+
+# Nur die neuen/geänderten Statistik-Funktionen:
+
+def get_journal_statistics(journal_id):
+    """Berechnet und gibt Statistiken für ein Journal zurück."""
+    entries = get_entries(journal_id)
+
+    if not entries:
+        return None
+
+    # Grundlegende Statistiken
+    total_trades = len(entries)
+    wins = sum(1 for e in entries if e.get('result') == "Win")
+    losses = sum(1 for e in entries if e.get('result') == "Loss")
+    bes = sum(1 for e in entries if e.get('result') == "BE")
+    partial_bes = sum(1 for e in entries if e.get('result') == "PartialBE")
+
+    win_rate = (wins / total_trades * 100) if total_trades > 0 else 0
+
+    long_positions = sum(1 for e in entries if e.get('position_type') == "Long")
+    short_positions = sum(1 for e in entries if e.get('position_type') == "Short")
+
+    # PnL-Berechnungen mit Typkonvertierungen
+    pnl_values = []
+    for e in entries:
+        pnl = e.get('pnl')
+        if pnl is not None:
+            # Konvertiere String-Werte in Floats
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue  # Überspringen von ungültigen Werten
+            pnl_values.append(pnl)
+
+    total_pnl = sum(pnl_values)
+    avg_pnl = total_pnl / total_trades if total_trades > 0 else 0
+
+    # Gleiches für Gewinn- und Verlust-PnLs
+    winning_pnls = []
+    for e in entries:
+        if e.get('result') == "Win" and e.get('pnl') is not None:
+            pnl = e.get('pnl')
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue
+            winning_pnls.append(pnl)
+
+    losing_pnls = []
+    for e in entries:
+        if e.get('result') == "Loss" and e.get('pnl') is not None:
+            pnl = e.get('pnl')
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue
+            losing_pnls.append(pnl)
+
+    avg_win_pnl = sum(winning_pnls) / len(winning_pnls) if winning_pnls else 0
+    avg_loss_pnl = sum(losing_pnls) / len(losing_pnls) if losing_pnls else 0
+
+    # R/R-Werte mit Typkonvertierung
+    rr_values = []
+    for e in entries:
+        rr = e.get('initial_rr')
+        if rr is not None:
+            if isinstance(rr, str):
+                try:
+                    rr = float(rr)
+                except ValueError:
+                    continue
+            rr_values.append(rr)
+
+    avg_rr = sum(rr_values) / len(rr_values) if rr_values else 0
+
+    # Checklistennutzung
+    checklist_usage = calculate_checklist_usage(journal_id, entries)
+
+    # Symbol-Performance
+    symbol_stats = calculate_symbol_performance(entries)
+
+    # Strategie-Performance
+    strategy_stats = calculate_strategy_performance(entries)
+
+    # Neue Statistiken
+    session_stats = calculate_session_performance(entries)
+    daily_stats = calculate_daily_performance(entries)
+    monthly_stats = calculate_monthly_performance(entries)
+    checklist_win_rate = calculate_checklist_win_rates(journal_id, entries)
+
+    journal = get_journal(journal_id)
+
+    return {
+        'journal_name': journal['name'] if journal else "",
+        'total_trades': total_trades,
+        'win_rate_percentage': round(win_rate, 2),
+        'results_count': {
+            'Win': wins,
+            'Loss': losses,
+            'BE': bes,
+            'PartialBE': partial_bes
+        },
+        'position_type_count': {
+            'Long': long_positions,
+            'Short': short_positions
+        },
+        'average_pnl': round(avg_pnl, 2),
+        'average_winning_pnl': round(avg_win_pnl, 2),
+        'average_losing_pnl': round(avg_loss_pnl, 2),
+        'average_initial_rr': round(avg_rr, 1) if avg_rr is not None else None,
+        'checklist_usage': checklist_usage,
+        'symbol_performance': symbol_stats,
+        'strategy_performance': strategy_stats,
+        # Neue Statistiken
+        'session_performance': session_stats,
+        'daily_performance': daily_stats,
+        'monthly_performance': monthly_stats,
+        'checklist_win_rates': checklist_win_rate
+    }
+# NEU: Funktionen für erweiterte Statistiken
+def calculate_session_performance(entries):
+    """Berechnet die Performance nach Tageszeit."""
+    sessions = {
+        "Morgen (6-10 Uhr)": {"total": 0, "wins": 0, "losses": 0},
+        "Vormittag (10-12 Uhr)": {"total": 0, "wins": 0, "losses": 0},
+        "Mittag (12-14 Uhr)": {"total": 0, "wins": 0, "losses": 0},
+        "Nachmittag (14-18 Uhr)": {"total": 0, "wins": 0, "losses": 0},
+        "Abend (18-22 Uhr)": {"total": 0, "wins": 0, "losses": 0},
+        "Nacht (22-6 Uhr)": {"total": 0, "wins": 0, "losses": 0}
+    }
+
+    for entry in entries:
+        if not entry.get('entry_date'):
+            continue
+
+        entry_date = datetime.datetime.fromisoformat(entry['entry_date'].replace('Z', '+00:00'))
+        hour = entry_date.hour
+
+        session_key = ""
+        if 6 <= hour < 10:
+            session_key = "Morgen (6-10 Uhr)"
+        elif 10 <= hour < 12:
+            session_key = "Vormittag (10-12 Uhr)"
+        elif 12 <= hour < 14:
+            session_key = "Mittag (12-14 Uhr)"
+        elif 14 <= hour < 18:
+            session_key = "Nachmittag (14-18 Uhr)"
+        elif 18 <= hour < 22:
+            session_key = "Abend (18-22 Uhr)"
+        else:
+            session_key = "Nacht (22-6 Uhr)"
+
+        sessions[session_key]["total"] += 1
+
+        if entry.get('result') == 'Win':
+            sessions[session_key]["wins"] += 1
+        elif entry.get('result') == 'Loss':
+            sessions[session_key]["losses"] += 1
+
+    # Berechne Gewinnrate für jede Session
+    results = []
+    for session, data in sessions.items():
+        win_rate = 0
+        if data["total"] > 0:
+            win_rate = (data["wins"] / data["total"]) * 100
+
+        results.append({
+            "session": session,
+            "total": data["total"],
+            "wins": data["wins"],
+            "losses": data["losses"],
+            "win_rate": win_rate
+        })
+
+    return results
+
+def calculate_daily_performance(entries):
+    """Berechnet die Performance nach Wochentagen und erstellt Kalenderdaten."""
+    days = {
+        0: {"name": "Montag", "total": 0, "wins": 0, "losses": 0},
+        1: {"name": "Dienstag", "total": 0, "wins": 0, "losses": 0},
+        2: {"name": "Mittwoch", "total": 0, "wins": 0, "losses": 0},
+        3: {"name": "Donnerstag", "total": 0, "wins": 0, "losses": 0},
+        4: {"name": "Freitag", "total": 0, "wins": 0, "losses": 0},
+        5: {"name": "Samstag", "total": 0, "wins": 0, "losses": 0},
+        6: {"name": "Sonntag", "total": 0, "wins": 0, "losses": 0}
+    }
+
+    # Auch tägliche Daten für den Kalender
+    daily_data = {}
+
+    for entry in entries:
+        if not entry.get('entry_date'):
+            continue
+
+        entry_date = datetime.datetime.fromisoformat(entry['entry_date'].replace('Z', '+00:00'))
+        day_of_week = entry_date.weekday()
+        date_key = entry_date.strftime('%Y-%m-%d')
+
+        # Wochentags-Statistik
+        days[day_of_week]["total"] += 1
+
+        if entry.get('result') == 'Win':
+            days[day_of_week]["wins"] += 1
+        elif entry.get('result') == 'Loss':
+            days[day_of_week]["losses"] += 1
+
+        # Tägliche Daten für den Kalender
+        if date_key not in daily_data:
+            daily_data[date_key] = {"total": 0, "wins": 0, "losses": 0, "pnl": 0}
+
+        daily_data[date_key]["total"] += 1
+
+        if entry.get('result') == 'Win':
+            daily_data[date_key]["wins"] += 1
+        elif entry.get('result') == 'Loss':
+            daily_data[date_key]["losses"] += 1
+
+        if entry.get('pnl') is not None:
+            daily_data[date_key]["pnl"] += entry.get('pnl')
+
+    # Ergebnisse für Wochentage
+    weekday_results = []
+    for day_idx, data in days.items():
+        win_rate = 0
+        if data["total"] > 0:
+            win_rate = (data["wins"] / data["total"]) * 100
+
+        weekday_results.append({
+            "day": data["name"],
+            "total": data["total"],
+            "wins": data["wins"],
+            "losses": data["losses"],
+            "win_rate": win_rate
+        })
+
+    # Ergebnisse für Kalender
+    calendar_results = []
+    for date, data in daily_data.items():
+        win_rate = 0
+        if data["total"] > 0:
+            win_rate = (data["wins"] / data["total"]) * 100
+
+        calendar_results.append({
+            "date": date,
+            "total": data["total"],
+            "wins": data["wins"],
+            "losses": data["losses"],
+            "win_rate": win_rate,
+            "pnl": data["pnl"]
+        })
+
+    return {
+        "weekdays": weekday_results,
+        "calendar": calendar_results
+    }
+
+
+def calculate_monthly_performance(entries):
+    """Berechnet die Performance nach Monaten."""
+    monthly_data = {}
+
+    for entry in entries:
+        if not entry.get('entry_date'):
+            continue
+
+        entry_date = datetime.datetime.fromisoformat(entry['entry_date'].replace('Z', '+00:00'))
+        month_key = entry_date.strftime('%Y-%m')
+
+        if month_key not in monthly_data:
+            monthly_data[month_key] = {
+                "month_name": entry_date.strftime('%B %Y'),
+                "total": 0,
+                "wins": 0,
+                "losses": 0,
+                "pnl": 0
+            }
+
+        monthly_data[month_key]["total"] += 1
+
+        if entry.get('result') == 'Win':
+            monthly_data[month_key]["wins"] += 1
+        elif entry.get('result') == 'Loss':
+            monthly_data[month_key]["losses"] += 1
+
+        if entry.get('pnl') is not None:
+            monthly_data[month_key]["pnl"] += entry.get('pnl')
+
+    # Ergebnisse nach Monaten
+    results = []
+    for month_key, data in monthly_data.items():
+        win_rate = 0
+        if data["total"] > 0:
+            win_rate = (data["wins"] / data["total"]) * 100
+
+        results.append({
+            "month": month_key,
+            "month_name": data["month_name"],
+            "total": data["total"],
+            "wins": data["wins"],
+            "losses": data["losses"],
+            "win_rate": win_rate,
+            "pnl": data["pnl"]
+        })
+
+    # Sortiere nach Monat
+    results.sort(key=lambda x: x["month"])
+
+    return results
+
+
+def calculate_checklist_win_rates(journal_id, entries):
+    """Berechnet die Gewinnrate für jedes Checklist-Item."""
+    templates = get_checklist_templates(journal_id)
+    statuses = load_data(STATUSES_FILE)
+
+    item_stats = {}
+    for template in templates:
+        template_id = template['id']
+        item_stats[template_id] = {
+            "text": template['text'],
+            "checked_wins": 0,
+            "checked_losses": 0,
+            "unchecked_wins": 0,
+            "unchecked_losses": 0
+        }
+
+    for entry in entries:
+        entry_id = entry['id']
+        is_win = entry.get('result') == 'Win'
+        is_loss = entry.get('result') == 'Loss'
+
+        if not (is_win or is_loss):
+            continue
+
+        for template in templates:
+            template_id = template['id']
+
+            # Finde den Status für dieses Template und diesen Eintrag
+            entry_status = next((s for s in statuses if s['entry_id'] == entry_id and s['template_id'] == template_id),
+                                None)
+
+            if entry_status:
+                if entry_status['checked']:
+                    if is_win:
+                        item_stats[template_id]["checked_wins"] += 1
+                    elif is_loss:
+                        item_stats[template_id]["checked_losses"] += 1
+                else:
+                    if is_win:
+                        item_stats[template_id]["unchecked_wins"] += 1
+                    elif is_loss:
+                        item_stats[template_id]["unchecked_losses"] += 1
+
+    # Berechne die Gewinnraten
+    results = []
+    for template_id, stats in item_stats.items():
+        checked_total = stats["checked_wins"] + stats["checked_losses"]
+        checked_win_rate = 0
+        if checked_total > 0:
+            checked_win_rate = (stats["checked_wins"] / checked_total) * 100
+
+        unchecked_total = stats["unchecked_wins"] + stats["unchecked_losses"]
+        unchecked_win_rate = 0
+        if unchecked_total > 0:
+            unchecked_win_rate = (stats["unchecked_wins"] / unchecked_total) * 100
+
+        win_rate_diff = checked_win_rate - unchecked_win_rate
+
+        results.append({
+            "template_id": template_id,
+            "text": stats["text"],
+            "checked_total": checked_total,
+            "checked_win_rate": checked_win_rate,
+            "unchecked_total": unchecked_total,
+            "unchecked_win_rate": unchecked_win_rate,
+            "win_rate_diff": win_rate_diff
+        })
+
+    # Sortiere nach Unterschied in der Gewinnrate (absteigend)
+    results.sort(key=lambda x: x["win_rate_diff"], reverse=True)
+
+    return results
 
 # Initialisierung
 init_data_files()
