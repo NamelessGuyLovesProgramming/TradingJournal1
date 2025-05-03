@@ -1,13 +1,13 @@
 // src/components/JournalSelector.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  Button, 
-  Dialog, 
-  DialogTitle, 
+import {
+  Select,
+  MenuItem,
+  FormControl,
+  Button,
+  Dialog,
+  DialogTitle,
   DialogContent,
   DialogActions
 } from '@mui/material';
@@ -51,9 +51,9 @@ const JournalSelector = () => {
           ))}
         </Select>
       </FormControl>
-      <Button 
-        variant="contained" 
-        color="secondary" 
+      <Button
+        variant="contained"
+        color="secondary"
         onClick={handleOpenDialog}
         sx={{ color: 'white' }}
       >
