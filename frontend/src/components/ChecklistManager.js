@@ -58,7 +58,7 @@ const ChecklistManager = ({ journalId, onComplete }) => {
   };
 
   const handleDeleteItem = async (templateId) => {
-    if (!confirm('Are you sure you want to delete this checklist item?')) return;
+    if (!window.confirm('Are you sure you want to delete this checklist item?')) return;
     
     try {
       await deleteChecklistTemplate(journalId, templateId);
