@@ -1,15 +1,12 @@
-# src/main.py - Angepasst für reine API-Funktion
-
 import os
 import sys
-# DON'T CHANGE THIS !!!
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.dirname(__file__))
 
-from flask import Flask, jsonify
-from flask_cors import CORS  # Add this import
+from flask import Flask, jsonify, send_from_directory
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # Importiere die Route-Definitionen
@@ -22,12 +19,10 @@ app.register_blueprint(journal_bp, url_prefix='/api')
 app.register_blueprint(entry_bp, url_prefix='/api')
 app.register_blueprint(stats_bp, url_prefix='/api')
 
-# Entfernt: Die Routen für statische Dateien
-
-# Route zum Bereitstellen hochgeladener Dateien (wird für die API benötigt)
+# Route zum Bereitstellen hochgeladener Dateien
 @app.route('/api/uploads/<path:filename>')
 def serve_upload(filename):
-    upload_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'uploads')
+    upload_dir = os.path.join(os.path.dirname(__file__), 'data', 'uploads')
     # Sicherheitsprüfung: sicherstellen, dass der Dateiname sicher ist
     safe_path = os.path.abspath(os.path.join(upload_dir, filename))
     if not safe_path.startswith(os.path.abspath(upload_dir)):
@@ -35,4 +30,9 @@ def serve_upload(filename):
     return send_from_directory(upload_dir, filename)
 
 if __name__ == '__main__':
+    # Initialisiere die Datenbanken
+    from src.data_storage import init_data_files
+    init_data_files()
+    
+    print("API-Server läuft auf http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
