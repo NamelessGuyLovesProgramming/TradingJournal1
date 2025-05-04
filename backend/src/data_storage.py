@@ -130,55 +130,6 @@ def create_journal(data):
 
     return new_journal
 
-def calculate_emotion_performance(entries):
-    """Berechnet die Performance nach emotionalen Zuständen."""
-    emotion_data = {}
-
-    for entry in entries:
-        emotion = entry.get('emotion')
-        if not emotion:
-            continue
-
-        if emotion not in emotion_data:
-            emotion_data[emotion] = {'count': 0, 'wins': 0, 'losses': 0, 'pnl': 0}
-
-        emotion_data[emotion]['count'] += 1
-
-        if entry.get('result') == "Win":
-            emotion_data[emotion]['wins'] += 1
-        elif entry.get('result') == "Loss":
-            emotion_data[emotion]['losses'] += 1
-
-        # Füge PnL hinzu, wenn vorhanden
-        if entry.get('pnl') is not None:
-            pnl = entry.get('pnl')
-            if isinstance(pnl, str):
-                try:
-                    pnl = float(pnl)
-                except ValueError:
-                    continue
-            emotion_data[emotion]['pnl'] += pnl
-
-    results = []
-    for emotion, data in emotion_data.items():
-        win_rate = (data['wins'] / data['count'] * 100) if data['count'] > 0 else 0
-        avg_pnl = data['pnl'] / data['count'] if data['count'] > 0 else 0
-
-        results.append({
-            'emotion': emotion,
-            'count': data['count'],
-            'wins': data['wins'],
-            'losses': data['losses'],
-            'win_rate': win_rate,
-            'total_pnl': data['pnl'],
-            'avg_pnl': avg_pnl
-        })
-
-    # Sortiere nach Anzahl der Einträge (absteigend)
-    results.sort(key=lambda x: x['count'], reverse=True)
-
-    return results
-
 def update_journal(journal_id, data):
     """Aktualisiert ein bestehendes Journal."""
     journals = load_data(JOURNALS_FILE)
@@ -435,9 +386,13 @@ def update_entry(entry_id, data):
     for entry in entries:
         if entry['id'] == entry_id:
             # Aktualisiere die Felder
-            fields = ['symbol', 'position_type', 'strategy', 'initial_rr', 'pnl', 'result',
-                      'confidence_level', 'trade_rating', 'notes', 'stop_loss', 'take_profit',
-                      'custom_field_value', 'emotion']
+            fields = [
+                'entry_date', 'end_date', 'symbol', 'position_type',
+                'strategy', 'initial_rr', 'risk_percentage', 'pnl',
+                'result', 'confidence_level', 'trade_rating',
+                'notes', 'stop_loss', 'take_profit',
+                'custom_field_value', 'emotion'
+            ]
 
             for field in fields:
                 if field in data:
@@ -627,129 +582,6 @@ def delete_image(image_id):
 
 
 # Statistik-Funktionen
-def get_journal_statistics(journal_id):
-    """Berechnet und gibt Statistiken für ein Journal zurück."""
-    entries = get_entries(journal_id)
-
-    if not entries:
-        return None
-
-    # Grundlegende Statistiken
-    total_trades = len(entries)
-    wins = sum(1 for e in entries if e.get('result') == "Win")
-    losses = sum(1 for e in entries if e.get('result') == "Loss")
-    bes = sum(1 for e in entries if e.get('result') == "BE")
-    partial_bes = sum(1 for e in entries if e.get('result') == "PartialBE")
-
-    win_rate = (wins / total_trades * 100) if total_trades > 0 else 0
-
-    long_positions = sum(1 for e in entries if e.get('position_type') == "Long")
-    short_positions = sum(1 for e in entries if e.get('position_type') == "Short")
-
-    # PnL-Berechnungen
-    pnl_values = []
-    for e in entries:
-        pnl = e.get('pnl')
-        if pnl is not None:
-            # Konvertiere String-Werte in Floats
-            if isinstance(pnl, str):
-                try:
-                    pnl = float(pnl)
-                except ValueError:
-                    continue  # Überspringen von ungültigen Werten
-            pnl_values.append(pnl)
-
-    total_pnl = sum(pnl_values)
-    avg_pnl = total_pnl / total_trades if total_trades > 0 else 0
-
-    # Gleiches für Gewinn- und Verlust-PnLs
-    winning_pnls = []
-    for e in entries:
-        if e.get('result') == "Win" and e.get('pnl') is not None:
-            pnl = e.get('pnl')
-            if isinstance(pnl, str):
-                try:
-                    pnl = float(pnl)
-                except ValueError:
-                    continue
-            winning_pnls.append(pnl)
-
-    losing_pnls = []
-    for e in entries:
-        if e.get('result') == "Loss" and e.get('pnl') is not None:
-            pnl = e.get('pnl')
-            if isinstance(pnl, str):
-                try:
-                    pnl = float(pnl)
-                except ValueError:
-                    continue
-            losing_pnls.append(pnl)
-
-    avg_win_pnl = sum(winning_pnls) / len(winning_pnls) if winning_pnls else 0
-    avg_loss_pnl = sum(losing_pnls) / len(losing_pnls) if losing_pnls else 0
-
-    # R/R-Werte
-    rr_values = []
-    for e in entries:
-        rr = e.get('initial_rr')
-        if rr is not None:
-            if isinstance(rr, str):
-                try:
-                    rr = float(rr)
-                except ValueError:
-                    continue
-            rr_values.append(rr)
-
-    avg_rr = sum(rr_values) / len(rr_values) if rr_values else 0
-
-    # Checklistennutzung
-    checklist_usage = calculate_checklist_usage(journal_id, entries)
-
-    # Symbol-Performance
-    symbol_stats = calculate_symbol_performance(entries)
-
-    # Strategie-Performance
-    strategy_stats = calculate_strategy_performance(entries)
-
-    journal = get_journal(journal_id)
-    # Neue Statistiken
-    session_stats = calculate_session_performance(entries)
-    daily_stats = calculate_daily_performance(entries)
-    monthly_stats = calculate_monthly_performance(entries)
-    checklist_win_rate = calculate_checklist_win_rates(journal_id, entries)
-    emotion_stats = calculate_emotion_performance(entries)  # New: emotion statistics
-
-    journal = get_journal(journal_id)
-
-    return {
-        'journal_name': journal['name'] if journal else "",
-        'total_trades': total_trades,
-        'win_rate_percentage': round(win_rate, 2),
-        'results_count': {
-            'Win': wins,
-            'Loss': losses,
-            'BE': bes,
-            'PartialBE': partial_bes
-        },
-        'position_type_count': {
-            'Long': long_positions,
-            'Short': short_positions
-        },
-        'average_pnl': round(avg_pnl, 2),
-        'average_winning_pnl': round(avg_win_pnl, 2),
-        'average_losing_pnl': round(avg_loss_pnl, 2),
-        'average_initial_rr': round(avg_rr, 1) if avg_rr is not None else None,
-        'checklist_usage': checklist_usage,
-        'symbol_performance': symbol_stats,
-        'strategy_performance': strategy_stats,
-        # Statistiken
-        'session_performance': session_stats,
-        'daily_performance': daily_stats,
-        'monthly_performance': monthly_stats,
-        'checklist_win_rates': checklist_win_rate,
-        'emotion_performance': emotion_stats  # New: include emotion statistics
-    }
-
 
 def calculate_checklist_usage(journal_id, entries):
     """Berechnet die Nutzung von Checklistenelementen."""
@@ -778,93 +610,8 @@ def calculate_checklist_usage(journal_id, entries):
     return results
 
 
-def calculate_symbol_performance(entries):
-    """Berechnet die Performance nach Symbol."""
-    symbol_data = {}
-
-    for entry in entries:
-        symbol = entry.get('symbol')
-        if not symbol:
-            continue
-
-        if symbol not in symbol_data:
-            symbol_data[symbol] = {'count': 0, 'wins': 0, 'losses': 0}
-
-        symbol_data[symbol]['count'] += 1
-
-        if entry.get('result') == "Win":
-            symbol_data[symbol]['wins'] += 1
-        elif entry.get('result') == "Loss":
-            symbol_data[symbol]['losses'] += 1
-
-    results = []
-    for symbol, data in symbol_data.items():
-        win_rate = (data['wins'] / data['count'] * 100) if data['count'] > 0 else 0
-
-        results.append({
-            'symbol': symbol,
-            'count': data['count'],
-            'wins': data['wins'],
-            'losses': data['losses'],
-            'win_rate': win_rate
-        })
-
-    # Sortiere nach Anzahl der Einträge (absteigend)
-    results.sort(key=lambda x: x['count'], reverse=True)
-
-    return results
 
 
-def calculate_strategy_performance(entries):
-    """Berechnet die Performance nach Strategie."""
-    strategy_data = {}
-
-    for entry in entries:
-        strategy = entry.get('strategy')
-        if not strategy:
-            continue
-
-        if strategy not in strategy_data:
-            strategy_data[strategy] = {'count': 0, 'wins': 0, 'losses': 0, 'pnl': 0}
-
-        strategy_data[strategy]['count'] += 1
-
-        if entry.get('result') == "Win":
-            strategy_data[strategy]['wins'] += 1
-        elif entry.get('result') == "Loss":
-            strategy_data[strategy]['losses'] += 1
-
-        # Füge PnL hinzu, wenn vorhanden, mit Konvertierung von String zu Float
-        if entry.get('pnl') is not None:
-            try:
-                # Konvertiere String zu Float, falls es ein String ist
-                pnl_value = float(entry.get('pnl')) if isinstance(entry.get('pnl'), str) else entry.get('pnl')
-                strategy_data[strategy]['pnl'] += pnl_value
-            except (ValueError, TypeError):
-                # Ignoriere ungültige Werte
-                pass
-
-    results = []
-    for strategy, data in strategy_data.items():
-        win_rate = (data['wins'] / data['count'] * 100) if data['count'] > 0 else 0
-        avg_pnl = data['pnl'] / data['count'] if data['count'] > 0 else 0
-
-        results.append({
-            'strategy': strategy,
-            'count': data['count'],
-            'wins': data['wins'],
-            'losses': data['losses'],
-            'win_rate': win_rate,
-            'total_pnl': data['pnl'],
-            'avg_pnl': avg_pnl
-        })
-
-    # Sortiere nach Anzahl der Einträge (absteigend)
-    results.sort(key=lambda x: x['count'], reverse=True)
-
-    return results
-# This goes in src/data_storage.py
-# Function to delete a journal and all its related data
 
 def delete_journal(journal_id):
     """Löscht ein Journal und alle zugehörigen Daten."""
@@ -926,6 +673,8 @@ def delete_related_entry_data(entry_ids):
 
 # Nur die neuen/geänderten Statistik-Funktionen:
 
+
+
 def get_journal_statistics(journal_id):
     """Berechnet und gibt Statistiken für ein Journal zurück."""
     entries = get_entries(journal_id)
@@ -940,12 +689,15 @@ def get_journal_statistics(journal_id):
     bes = sum(1 for e in entries if e.get('result') == "BE")
     partial_bes = sum(1 for e in entries if e.get('result') == "PartialBE")
 
-    win_rate = (wins / total_trades * 100) if total_trades > 0 else 0
+    # FIXED: Count Win, BE, and PartialBE as positive results
+    positive_results = wins + bes + partial_bes
+    total_with_result = positive_results + losses
+    win_rate = (positive_results / total_with_result * 100) if total_with_result > 0 else 0
 
     long_positions = sum(1 for e in entries if e.get('position_type') == "Long")
     short_positions = sum(1 for e in entries if e.get('position_type') == "Short")
 
-    # PnL-Berechnungen mit Typkonvertierungen
+    # PnL-Berechnungen
     pnl_values = []
     for e in entries:
         pnl = e.get('pnl')
@@ -1015,6 +767,7 @@ def get_journal_statistics(journal_id):
     daily_stats = calculate_daily_performance(entries)
     monthly_stats = calculate_monthly_performance(entries)
     checklist_win_rate = calculate_checklist_win_rates(journal_id, entries)
+    emotion_stats = calculate_emotion_performance(entries)  # New: emotion statistics
 
     journal = get_journal(journal_id)
 
@@ -1039,22 +792,121 @@ def get_journal_statistics(journal_id):
         'checklist_usage': checklist_usage,
         'symbol_performance': symbol_stats,
         'strategy_performance': strategy_stats,
-        # Neue Statistiken
+        # Statistiken
         'session_performance': session_stats,
         'daily_performance': daily_stats,
         'monthly_performance': monthly_stats,
-        'checklist_win_rates': checklist_win_rate
+        'checklist_win_rates': checklist_win_rate,
+        'emotion_performance': emotion_stats  # Hier werden die Emotionsstatistiken eingebunden
     }
-# NEU: Funktionen für erweiterte Statistiken
+
+
+def calculate_symbol_performance(entries):
+    """Berechnet die Performance nach Symbol."""
+    symbol_data = {}
+
+    for entry in entries:
+        symbol = entry.get('symbol')
+        if not symbol:
+            continue
+
+        if symbol not in symbol_data:
+            symbol_data[symbol] = {'count': 0, 'positive_results': 0, 'losses': 0, 'total_with_result': 0}
+
+        symbol_data[symbol]['count'] += 1
+
+        # Count Win, BE, and PartialBE as positive results, Only Loss as negative
+        result = entry.get('result')
+        if result:
+            symbol_data[symbol]['total_with_result'] += 1
+            if result == "Loss":
+                symbol_data[symbol]['losses'] += 1
+            elif result in ["Win", "BE", "PartialBE"]:
+                symbol_data[symbol]['positive_results'] += 1
+
+    results = []
+    for symbol, data in symbol_data.items():
+        # Calculate win rate based on positive results (Win, BE, PartialBE) vs total results
+        win_rate = (data['positive_results'] / data['total_with_result'] * 100) if data['total_with_result'] > 0 else 0
+
+        results.append({
+            'symbol': symbol,
+            'count': data['count'],
+            'wins': data['positive_results'],  # This now includes Win, BE, PartialBE
+            'losses': data['losses'],
+            'win_rate': win_rate
+        })
+
+    # Sortiere nach Anzahl der Einträge (absteigend)
+    results.sort(key=lambda x: x['count'], reverse=True)
+
+    return results
+
+
+def calculate_strategy_performance(entries):
+    """Berechnet die Performance nach Strategie."""
+    strategy_data = {}
+
+    for entry in entries:
+        strategy = entry.get('strategy')
+        if not strategy:
+            continue
+
+        if strategy not in strategy_data:
+            strategy_data[strategy] = {'count': 0, 'positive_results': 0, 'losses': 0, 'pnl': 0, 'total_with_result': 0}
+
+        strategy_data[strategy]['count'] += 1
+
+        # Count Win, BE, and PartialBE as positive results, Only Loss as negative
+        result = entry.get('result')
+        if result:
+            strategy_data[strategy]['total_with_result'] += 1
+            if result == "Loss":
+                strategy_data[strategy]['losses'] += 1
+            elif result in ["Win", "BE", "PartialBE"]:
+                strategy_data[strategy]['positive_results'] += 1
+
+        # Füge PnL hinzu, wenn vorhanden, mit Konvertierung von String zu Float
+        if entry.get('pnl') is not None:
+            try:
+                # Konvertiere String zu Float, falls es ein String ist
+                pnl_value = float(entry.get('pnl')) if isinstance(entry.get('pnl'), str) else entry.get('pnl')
+                strategy_data[strategy]['pnl'] += pnl_value
+            except (ValueError, TypeError):
+                # Ignoriere ungültige Werte
+                pass
+
+    results = []
+    for strategy, data in strategy_data.items():
+        # Calculate win rate based on positive results (Win, BE, PartialBE) vs total results
+        win_rate = (data['positive_results'] / data['total_with_result'] * 100) if data['total_with_result'] > 0 else 0
+        avg_pnl = data['pnl'] / data['count'] if data['count'] > 0 else 0
+
+        results.append({
+            'strategy': strategy,
+            'count': data['count'],
+            'wins': data['positive_results'],  # This now includes Win, BE, PartialBE
+            'losses': data['losses'],
+            'win_rate': win_rate,
+            'total_pnl': data['pnl'],
+            'avg_pnl': avg_pnl
+        })
+
+    # Sortiere nach Anzahl der Einträge (absteigend)
+    results.sort(key=lambda x: x['count'], reverse=True)
+
+    return results
+
+
 def calculate_session_performance(entries):
     """Berechnet die Performance nach Tageszeit."""
     sessions = {
-        "Morgen (6-10 Uhr)": {"total": 0, "wins": 0, "losses": 0},
-        "Vormittag (10-12 Uhr)": {"total": 0, "wins": 0, "losses": 0},
-        "Mittag (12-14 Uhr)": {"total": 0, "wins": 0, "losses": 0},
-        "Nachmittag (14-18 Uhr)": {"total": 0, "wins": 0, "losses": 0},
-        "Abend (18-22 Uhr)": {"total": 0, "wins": 0, "losses": 0},
-        "Nacht (22-6 Uhr)": {"total": 0, "wins": 0, "losses": 0}
+        "Morgen (6-10 Uhr)": {"total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        "Vormittag (10-12 Uhr)": {"total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        "Mittag (12-14 Uhr)": {"total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        "Nachmittag (14-18 Uhr)": {"total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        "Abend (18-22 Uhr)": {"total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        "Nacht (22-6 Uhr)": {"total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0}
     }
 
     for entry in entries:
@@ -1080,38 +932,44 @@ def calculate_session_performance(entries):
 
         sessions[session_key]["total"] += 1
 
-        if entry.get('result') == 'Win':
-            sessions[session_key]["wins"] += 1
-        elif entry.get('result') == 'Loss':
-            sessions[session_key]["losses"] += 1
+        # Count Win, BE, and PartialBE as positive results, Only Loss as negative
+        result = entry.get('result')
+        if result:
+            sessions[session_key]["total_with_result"] += 1
+            if result == "Loss":
+                sessions[session_key]["losses"] += 1
+            elif result in ["Win", "BE", "PartialBE"]:
+                sessions[session_key]["positive_results"] += 1
 
     # Berechne Gewinnrate für jede Session
     results = []
     for session, data in sessions.items():
+        # Calculate win rate based on positive results (Win, BE, PartialBE) vs total results
         win_rate = 0
-        if data["total"] > 0:
-            win_rate = (data["wins"] / data["total"]) * 100
+        if data["total_with_result"] > 0:
+            win_rate = (data["positive_results"] / data["total_with_result"]) * 100
 
         results.append({
             "session": session,
             "total": data["total"],
-            "wins": data["wins"],
+            "wins": data["positive_results"],  # This now includes Win, BE, PartialBE
             "losses": data["losses"],
             "win_rate": win_rate
         })
 
     return results
 
+
 def calculate_daily_performance(entries):
     """Berechnet die Performance nach Wochentagen und erstellt Kalenderdaten."""
     days = {
-        0: {"name": "Montag", "total": 0, "wins": 0, "losses": 0},
-        1: {"name": "Dienstag", "total": 0, "wins": 0, "losses": 0},
-        2: {"name": "Mittwoch", "total": 0, "wins": 0, "losses": 0},
-        3: {"name": "Donnerstag", "total": 0, "wins": 0, "losses": 0},
-        4: {"name": "Freitag", "total": 0, "wins": 0, "losses": 0},
-        5: {"name": "Samstag", "total": 0, "wins": 0, "losses": 0},
-        6: {"name": "Sonntag", "total": 0, "wins": 0, "losses": 0}
+        0: {"name": "Montag", "total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        1: {"name": "Dienstag", "total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        2: {"name": "Mittwoch", "total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        3: {"name": "Donnerstag", "total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        4: {"name": "Freitag", "total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        5: {"name": "Samstag", "total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0},
+        6: {"name": "Sonntag", "total": 0, "positive_results": 0, "losses": 0, "total_with_result": 0}
     }
 
     # Auch tägliche Daten für den Kalender
@@ -1128,21 +986,28 @@ def calculate_daily_performance(entries):
         # Wochentags-Statistik
         days[day_of_week]["total"] += 1
 
-        if entry.get('result') == 'Win':
-            days[day_of_week]["wins"] += 1
-        elif entry.get('result') == 'Loss':
-            days[day_of_week]["losses"] += 1
+        # Count Win, BE, and PartialBE as positive results, Only Loss as negative
+        result = entry.get('result')
+        if result:
+            days[day_of_week]["total_with_result"] += 1
+            if result == "Loss":
+                days[day_of_week]["losses"] += 1
+            elif result in ["Win", "BE", "PartialBE"]:
+                days[day_of_week]["positive_results"] += 1
 
         # Tägliche Daten für den Kalender
         if date_key not in daily_data:
-            daily_data[date_key] = {"total": 0, "wins": 0, "losses": 0, "pnl": 0}
+            daily_data[date_key] = {"total": 0, "positive_results": 0, "losses": 0, "pnl": 0, "total_with_result": 0}
 
         daily_data[date_key]["total"] += 1
 
-        if entry.get('result') == 'Win':
-            daily_data[date_key]["wins"] += 1
-        elif entry.get('result') == 'Loss':
-            daily_data[date_key]["losses"] += 1
+        # Count Win, BE, and PartialBE as positive results, Only Loss as negative
+        if result:
+            daily_data[date_key]["total_with_result"] += 1
+            if result == "Loss":
+                daily_data[date_key]["losses"] += 1
+            elif result in ["Win", "BE", "PartialBE"]:
+                daily_data[date_key]["positive_results"] += 1
 
         # PnL mit Typkonvertierung hinzufügen
         if entry.get('pnl') is not None:
@@ -1157,14 +1022,15 @@ def calculate_daily_performance(entries):
     # Ergebnisse für Wochentage
     weekday_results = []
     for day_idx, data in days.items():
+        # Calculate win rate based on positive results (Win, BE, PartialBE) vs total results
         win_rate = 0
-        if data["total"] > 0:
-            win_rate = (data["wins"] / data["total"]) * 100
+        if data["total_with_result"] > 0:
+            win_rate = (data["positive_results"] / data["total_with_result"]) * 100
 
         weekday_results.append({
             "day": data["name"],
             "total": data["total"],
-            "wins": data["wins"],
+            "wins": data["positive_results"],  # This now includes Win, BE, PartialBE
             "losses": data["losses"],
             "win_rate": win_rate
         })
@@ -1172,14 +1038,15 @@ def calculate_daily_performance(entries):
     # Ergebnisse für Kalender
     calendar_results = []
     for date, data in daily_data.items():
+        # Calculate win rate based on positive results (Win, BE, PartialBE) vs total results
         win_rate = 0
-        if data["total"] > 0:
-            win_rate = (data["wins"] / data["total"]) * 100
+        if data["total_with_result"] > 0:
+            win_rate = (data["positive_results"] / data["total_with_result"]) * 100
 
         calendar_results.append({
             "date": date,
             "total": data["total"],
-            "wins": data["wins"],
+            "wins": data["positive_results"],  # This now includes Win, BE, PartialBE
             "losses": data["losses"],
             "win_rate": win_rate,
             "pnl": data["pnl"]
@@ -1189,6 +1056,7 @@ def calculate_daily_performance(entries):
         "weekdays": weekday_results,
         "calendar": calendar_results
     }
+
 
 def calculate_monthly_performance(entries):
     """Berechnet die Performance nach Monaten."""
@@ -1205,17 +1073,22 @@ def calculate_monthly_performance(entries):
             monthly_data[month_key] = {
                 "month_name": entry_date.strftime('%B %Y'),
                 "total": 0,
-                "wins": 0,
+                "positive_results": 0,
                 "losses": 0,
-                "pnl": 0
+                "pnl": 0,
+                "total_with_result": 0
             }
 
         monthly_data[month_key]["total"] += 1
 
-        if entry.get('result') == 'Win':
-            monthly_data[month_key]["wins"] += 1
-        elif entry.get('result') == 'Loss':
-            monthly_data[month_key]["losses"] += 1
+        # Count Win, BE, and PartialBE as positive results, Only Loss as negative
+        result = entry.get('result')
+        if result:
+            monthly_data[month_key]["total_with_result"] += 1
+            if result == "Loss":
+                monthly_data[month_key]["losses"] += 1
+            elif result in ["Win", "BE", "PartialBE"]:
+                monthly_data[month_key]["positive_results"] += 1
 
         # PnL mit Typkonvertierung hinzufügen
         if entry.get('pnl') is not None:
@@ -1230,15 +1103,16 @@ def calculate_monthly_performance(entries):
     # Ergebnisse nach Monaten
     results = []
     for month_key, data in monthly_data.items():
+        # Calculate win rate based on positive results (Win, BE, PartialBE) vs total results
         win_rate = 0
-        if data["total"] > 0:
-            win_rate = (data["wins"] / data["total"]) * 100
+        if data["total_with_result"] > 0:
+            win_rate = (data["positive_results"] / data["total_with_result"]) * 100
 
         results.append({
             "month": month_key,
             "month_name": data["month_name"],
             "total": data["total"],
-            "wins": data["wins"],
+            "wins": data["positive_results"],  # This now includes Win, BE, PartialBE
             "losses": data["losses"],
             "win_rate": win_rate,
             "pnl": data["pnl"]
@@ -1248,6 +1122,8 @@ def calculate_monthly_performance(entries):
     results.sort(key=lambda x: x["month"])
 
     return results
+
+
 def calculate_checklist_win_rates(journal_id, entries):
     """Berechnet die Gewinnrate für jedes Checklist-Item."""
     templates = get_checklist_templates(journal_id)
@@ -1258,19 +1134,22 @@ def calculate_checklist_win_rates(journal_id, entries):
         template_id = template['id']
         item_stats[template_id] = {
             "text": template['text'],
-            "checked_wins": 0,
+            "checked_positive": 0,
             "checked_losses": 0,
-            "unchecked_wins": 0,
-            "unchecked_losses": 0
+            "unchecked_positive": 0,
+            "unchecked_losses": 0,
+            "checked_total_with_result": 0,
+            "unchecked_total_with_result": 0
         }
 
     for entry in entries:
         entry_id = entry['id']
-        is_win = entry.get('result') == 'Win'
-        is_loss = entry.get('result') == 'Loss'
-
-        if not (is_win or is_loss):
+        result = entry.get('result')
+        if not result:
             continue
+
+        is_positive = result in ["Win", "BE", "PartialBE"]
+        is_loss = result == "Loss"
 
         for template in templates:
             template_id = template['id']
@@ -1281,37 +1160,38 @@ def calculate_checklist_win_rates(journal_id, entries):
 
             if entry_status:
                 if entry_status['checked']:
-                    if is_win:
-                        item_stats[template_id]["checked_wins"] += 1
+                    entry_status['checked_total_with_result'] += 1
+                    if is_positive:
+                        item_stats[template_id]["checked_positive"] += 1
                     elif is_loss:
                         item_stats[template_id]["checked_losses"] += 1
                 else:
-                    if is_win:
-                        item_stats[template_id]["unchecked_wins"] += 1
+                    item_stats[template_id]["unchecked_total_with_result"] += 1
+                    if is_positive:
+                        item_stats[template_id]["unchecked_positive"] += 1
                     elif is_loss:
                         item_stats[template_id]["unchecked_losses"] += 1
 
     # Berechne die Gewinnraten
     results = []
     for template_id, stats in item_stats.items():
-        checked_total = stats["checked_wins"] + stats["checked_losses"]
+        # Calculate win rates based on positive results (Win, BE, PartialBE) vs total results
         checked_win_rate = 0
-        if checked_total > 0:
-            checked_win_rate = (stats["checked_wins"] / checked_total) * 100
+        if stats["checked_total_with_result"] > 0:
+            checked_win_rate = (stats["checked_positive"] / stats["checked_total_with_result"]) * 100
 
-        unchecked_total = stats["unchecked_wins"] + stats["unchecked_losses"]
         unchecked_win_rate = 0
-        if unchecked_total > 0:
-            unchecked_win_rate = (stats["unchecked_wins"] / unchecked_total) * 100
+        if stats["unchecked_total_with_result"] > 0:
+            unchecked_win_rate = (stats["unchecked_positive"] / stats["unchecked_total_with_result"]) * 100
 
         win_rate_diff = checked_win_rate - unchecked_win_rate
 
         results.append({
             "template_id": template_id,
             "text": stats["text"],
-            "checked_total": checked_total,
+            "checked_total": stats["checked_total_with_result"],
             "checked_win_rate": checked_win_rate,
-            "unchecked_total": unchecked_total,
+            "unchecked_total": stats["unchecked_total_with_result"],
             "unchecked_win_rate": unchecked_win_rate,
             "win_rate_diff": win_rate_diff
         })
@@ -1322,6 +1202,59 @@ def calculate_checklist_win_rates(journal_id, entries):
     return results
 
 
+def calculate_emotion_performance(entries):
+    """Berechnet die Performance nach emotionalen Zuständen."""
+    emotion_data = {}
+
+    for entry in entries:
+        emotion = entry.get('emotion')
+        if not emotion:
+            continue
+
+        if emotion not in emotion_data:
+            emotion_data[emotion] = {'count': 0, 'positive_results': 0, 'losses': 0, 'pnl': 0, 'total_with_result': 0}
+
+        emotion_data[emotion]['count'] += 1
+
+        # Count Win, BE, and PartialBE as positive results, Only Loss as negative
+        result = entry.get('result')
+        if result:
+            emotion_data[emotion]['total_with_result'] += 1
+            if result == "Loss":
+                emotion_data[emotion]['losses'] += 1
+            elif result in ["Win", "BE", "PartialBE"]:
+                emotion_data[emotion]['positive_results'] += 1
+
+        # Füge PnL hinzu, wenn vorhanden
+        if entry.get('pnl') is not None:
+            pnl = entry.get('pnl')
+            if isinstance(pnl, str):
+                try:
+                    pnl = float(pnl)
+                except ValueError:
+                    continue
+            emotion_data[emotion]['pnl'] += pnl
+
+    results = []
+    for emotion, data in emotion_data.items():
+        # Calculate win rate based on positive results (Win, BE, PartialBE) vs total results
+        win_rate = (data['positive_results'] / data['total_with_result'] * 100) if data['total_with_result'] > 0 else 0
+        avg_pnl = data['pnl'] / data['count'] if data['count'] > 0 else 0
+
+        results.append({
+            'emotion': emotion,
+            'count': data['count'],
+            'wins': data['positive_results'],  # This now includes Win, BE, PartialBE
+            'losses': data['losses'],
+            'win_rate': win_rate,
+            'total_pnl': data['pnl'],
+            'avg_pnl': avg_pnl
+        })
+
+    # Sortiere nach Anzahl der Einträge (absteigend)
+    results.sort(key=lambda x: x['count'], reverse=True)
+
+    return results
 
 # Initialisierung
 init_data_files()

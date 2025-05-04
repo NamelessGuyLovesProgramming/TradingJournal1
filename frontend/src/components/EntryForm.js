@@ -1,4 +1,4 @@
-// src/components/EntryForm.js - Updated with end date and risk percentage fields
+// src/components/EntryForm.js
 import React, { useState, useEffect } from 'react';
 import {
   TextField,
@@ -19,7 +19,11 @@ import {
   Tab,
   RadioGroup,
   Radio,
+  ImageList,
+  ImageListItem,
+  IconButton,
 } from '@mui/material';
+import { DeleteIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import {
   createEntry,
@@ -36,39 +40,27 @@ const positionTypes = ['Long', 'Short'];
 const tradeResults = ['Win', 'Loss', 'BE', 'PartialBE'];
 const imageCategories = ['Before', 'After'];
 
-// Common trading emotions
+// Simplified trading emotions list as requested
 const tradingEmotions = [
   'Calm',
-  'Confident',
   'Focused',
-  'Hesitant',
   'Fear',
-  'Greed',
-  'FOMO',
-  'Revenge',
   'Boredom',
-  'Excitement',
   'Indecision',
-  'Anxiety',
-  'Overconfidence',
-  'Frustration',
-  'Impatience',
-  'Anger',
   'Disappointment',
   'Satisfaction',
-  'Relief',
-  'Neutral'
+  'Relief'
 ];
 
 const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
   const [formData, setFormData] = useState({
     entry_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    end_date: '',  // New end date field
+    end_date: '',
     symbol: '',
     position_type: '',
     strategy: '',
     initial_rr: '',
-    risk_percentage: '', // New risk percentage field
+    risk_percentage: '',
     pnl: '',
     result: '',
     confidence_level: 50,
@@ -89,8 +81,10 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showStrategyInput, setShowStrategyInput] = useState(false);
-  const [uploadType, setUploadType] = useState('file'); // 'file' or 'link'
+  const [uploadType, setUploadType] = useState('file');
   const [linkUrl, setLinkUrl] = useState('');
+  const [tempImages, setTempImages] = useState({ Before: [], After: [] });
+  const [formUploads, setFormUploads] = useState([]);
 
   // Load entry data for editing
   useEffect(() => {
@@ -219,21 +213,45 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
     if (!file) return;
 
     const category = tabValue === 0 ? 'Before' : 'After';
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('category', category);
 
-    try {
-      const response = await uploadImage(entryId, formData);
-      const newImage = response.data;
+    // If we have an entryId, upload directly
+    if (entryId) {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('category', category);
 
-      setImages({
-        ...images,
-        [category]: [...images[category], newImage],
+      try {
+        const response = await uploadImage(entryId, formData);
+        const newImage = response.data;
+
+        setImages({
+          ...images,
+          [category]: [...images[category], newImage],
+        });
+      } catch (err) {
+        setError('Failed to upload image');
+        console.error(err);
+      }
+    } else {
+      // No entryId yet, store the file for later upload
+      const tempImageId = Date.now();
+      const tempImageUrl = URL.createObjectURL(file);
+
+      // Add to temporary images for display
+      setTempImages({
+        ...tempImages,
+        [category]: [...tempImages[category], {
+          id: tempImageId,
+          file_path: tempImageUrl,
+          category: category
+        }]
       });
-    } catch (err) {
-      setError('Failed to upload image');
-      console.error(err);
+
+      // Store the file and metadata for later upload
+      setFormUploads([
+        ...formUploads,
+        { id: tempImageId, file, category }
+      ]);
     }
   };
 
@@ -242,34 +260,70 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
 
     const category = tabValue === 0 ? 'Before' : 'After';
 
-    try {
-      // Call API to add link
-      const response = await fetch(`/api/entries/${entryId}/links`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: linkUrl.trim(),
+    if (entryId) {
+      try {
+        // Call API to add link
+        const response = await fetch(`/api/entries/${entryId}/links`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: linkUrl.trim(),
+            category: category
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setImages({
+            ...images,
+            [category]: [...images[category], data],
+          });
+          setLinkUrl('');
+        } else {
+          setError(data.error || 'Failed to add link');
+        }
+      } catch (err) {
+        setError('Failed to add link');
+        console.error(err);
+      }
+    } else {
+      // Store link for later
+      const tempLinkId = Date.now();
+
+      // Add to temporary images for display
+      setTempImages({
+        ...tempImages,
+        [category]: [...tempImages[category], {
+          id: tempLinkId,
+          link_url: linkUrl,
           category: category
-        }),
+        }]
       });
 
-      const data = await response.json();
+      // Store the link and metadata for later
+      setFormUploads([
+        ...formUploads,
+        { id: tempLinkId, link: linkUrl, category }
+      ]);
 
-      if (response.ok) {
-        setImages({
-          ...images,
-          [category]: [...images[category], data],
-        });
-        setLinkUrl('');
-      } else {
-        setError(data.error || 'Failed to add link');
-      }
-    } catch (err) {
-      setError('Failed to add link');
-      console.error(err);
+      setLinkUrl('');
     }
+  };
+
+  const handleDeleteTempImage = (imageId) => {
+    // Remove from temp images
+    const category = tempImages.Before.find(img => img.id === imageId) ? 'Before' : 'After';
+
+    setTempImages({
+      ...tempImages,
+      [category]: tempImages[category].filter(img => img.id !== imageId)
+    });
+
+    // Remove from uploads
+    setFormUploads(formUploads.filter(upload => upload.id !== imageId));
   };
 
   const handleDeleteImage = async (imageId, category) => {
@@ -287,16 +341,60 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
     }
   };
 
+  const uploadPendingFiles = async (newEntryId) => {
+    const uploadPromises = formUploads.map(async (upload) => {
+      if (upload.file) {
+        // Upload file
+        const fileFormData = new FormData();
+        fileFormData.append('image', upload.file);
+        fileFormData.append('category', upload.category);
+
+        try {
+          await uploadImage(newEntryId, fileFormData);
+        } catch (err) {
+          console.error('Failed to upload image:', err);
+        }
+      } else if (upload.link) {
+        // Upload link
+        try {
+          await fetch(`/api/entries/${newEntryId}/links`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url: upload.link,
+              category: upload.category
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to add link:', err);
+        }
+      }
+    });
+
+    await Promise.all(uploadPromises);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
+      let responseData;
+
       if (entryId) {
-        await updateEntry(entryId, formData);
+        // Update existing entry
+        const response = await updateEntry(entryId, formData);
+        responseData = response.data;
       } else {
-        await createEntry(journalId, formData);
+        // Create new entry
+        const response = await createEntry(journalId, formData);
+        responseData = response.data;
+
+        // Upload all pending files/links
+        await uploadPendingFiles(responseData.id);
       }
 
       if (onComplete) onComplete();
@@ -324,7 +422,6 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
             margin="normal"
           />
 
-          {/* New End Date field */}
           <TextField
             fullWidth
             label="End Date & Time"
@@ -584,136 +681,202 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
             </FormGroup>
           )}
 
-          {entryId && (
-            <>
-              <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-                Screenshots & Links
-              </Typography>
+          {/* Image/Link upload section - now available for both new and existing entries */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+            Screenshots & Links
+          </Typography>
 
-              <Tabs
-                value={tabValue}
-                onChange={(e, newValue) => setTabValue(newValue)}
-                sx={{ mb: 2 }}
-              >
-                <Tab label="Before" />
-                <Tab label="After" />
-              </Tabs>
+          <Tabs
+            value={tabValue}
+            onChange={(e, newValue) => setTabValue(newValue)}
+            sx={{ mb: 2 }}
+          >
+            <Tab label="Before" />
+            <Tab label="After" />
+          </Tabs>
 
-              <Box>
-                <RadioGroup
-                  row
-                  value={uploadType}
-                  onChange={(e) => setUploadType(e.target.value)}
+          <Box>
+            <RadioGroup
+              row
+              value={uploadType}
+              onChange={(e) => setUploadType(e.target.value)}
+            >
+              <FormControlLabel value="file" control={<Radio />} label="Upload File" />
+              <FormControlLabel value="link" control={<Radio />} label="Add Link" />
+            </RadioGroup>
+
+            {uploadType === 'file' ? (
+              <>
+                <input
+                  accept="image/*"
+                  id="image-upload"
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
+                />
+                <label htmlFor="image-upload">
+                  <Button
+                    variant="contained"
+                    component="span"
+                  >
+                    Upload {tabValue === 0 ? 'Before' : 'After'} Image
+                  </Button>
+                </label>
+              </>
+            ) : (
+              <Box display="flex" alignItems="center" mt={1}>
+                <TextField
+                  fullWidth
+                  label={`${tabValue === 0 ? 'Before' : 'After'} URL`}
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  size="small"
+                  placeholder="https://example.com/image.jpg"
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleAddLink}
+                  disabled={!linkUrl.trim()}
+                  sx={{ ml: 1 }}
                 >
-                  <FormControlLabel value="file" control={<Radio />} label="Upload File" />
-                  <FormControlLabel value="link" control={<Radio />} label="Add Link" />
-                </RadioGroup>
+                  Add Link
+                </Button>
+              </Box>
+            )}
+          </Box>
 
-                {uploadType === 'file' ? (
-                  <>
-                    <input
-                      accept="image/*"
-                      id="image-upload"
-                      type="file"
-                      style={{ display: 'none' }}
-                      onChange={handleImageUpload}
-                    />
-                    <label htmlFor="image-upload">
-                      <Button
-                        variant="contained"
-                        component="span"
-                        disabled={!entryId}
+          {/* Display permanent images for existing entry */}
+          {entryId && images[tabValue === 0 ? 'Before' : 'After'].length > 0 && (
+            <Grid container spacing={1} sx={{ mt: 2 }}>
+              {images[tabValue === 0 ? 'Before' : 'After'].map(image => (
+                <Grid item xs={6} key={image.id}>
+                  <Box position="relative">
+                    {image.file_path ? (
+                      <img
+                        src={image.file_path}
+                        alt={`${image.category} Screenshot`}
+                        style={{
+                          width: '100%',
+                          height: 150,
+                          objectFit: 'cover',
+                          borderRadius: 4
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: 150,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 4,
+                          p: 1
+                        }}
                       >
-                        Upload {tabValue === 0 ? 'Before' : 'After'} Image
-                      </Button>
-                    </label>
-                  </>
-                ) : (
-                  <Box display="flex" alignItems="center" mt={1}>
-                    <TextField
-                      fullWidth
-                      label={`${tabValue === 0 ? 'Before' : 'After'} URL`}
-                      value={linkUrl}
-                      onChange={(e) => setLinkUrl(e.target.value)}
-                      size="small"
-                      placeholder="https://example.com/image.jpg"
-                    />
+                        <Typography noWrap variant="body2" sx={{ mb: 1, width: '100%', textAlign: 'center' }}>
+                          {image.link_url?.substring(0, 30)}...
+                        </Typography>
+                        <Button
+                          size="small"
+                          href={image.link_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          variant="outlined"
+                        >
+                          View Link
+                        </Button>
+                      </Box>
+                    )}
                     <Button
-                      variant="contained"
-                      onClick={handleAddLink}
-                      disabled={!entryId || !linkUrl.trim()}
-                      sx={{ ml: 1 }}
+                      size="small"
+                      color="error"
+                      sx={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        minWidth: 30,
+                        p: 0
+                      }}
+                      onClick={() => handleDeleteImage(image.id, image.category)}
                     >
-                      Add Link
+                      X
                     </Button>
                   </Box>
-                )}
-              </Box>
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
-              <Grid container spacing={1} sx={{ mt: 2 }}>
-                {images[tabValue === 0 ? 'Before' : 'After'].map(image => (
-                  <Grid item xs={6} key={image.id}>
-                    <Box position="relative">
-                      {image.file_path ? (
-                        <img
-                          src={image.file_path}
-                          alt={`${image.category} Screenshot`}
-                          style={{
-                            width: '100%',
-                            height: 150,
-                            objectFit: 'cover',
-                            borderRadius: 4
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: '100%',
-                            height: 150,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: 'background.paper',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 4,
-                            p: 1
-                          }}
-                        >
-                          <Typography noWrap variant="body2" sx={{ mb: 1, width: '100%', textAlign: 'center' }}>
-                            {image.link_url?.substring(0, 30)}...
-                          </Typography>
-                          <Button
-                            size="small"
-                            href={image.link_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            variant="outlined"
-                          >
-                            View Link
-                          </Button>
-                        </Box>
-                      )}
-                      <Button
-                        size="small"
-                        color="error"
-                        sx={{
-                          position: 'absolute',
-                          top: 4,
-                          right: 4,
-                          minWidth: 30,
-                          p: 0
+          {/* Display temporary images for new entry */}
+          {!entryId && tempImages[tabValue === 0 ? 'Before' : 'After'].length > 0 && (
+            <Grid container spacing={1} sx={{ mt: 2 }}>
+              {tempImages[tabValue === 0 ? 'Before' : 'After'].map(image => (
+                <Grid item xs={6} key={image.id}>
+                  <Box position="relative">
+                    {image.file_path ? (
+                      <img
+                        src={image.file_path}
+                        alt={`${image.category} Screenshot`}
+                        style={{
+                          width: '100%',
+                          height: 150,
+                          objectFit: 'cover',
+                          borderRadius: 4
                         }}
-                        onClick={() => handleDeleteImage(image.id, image.category)}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: 150,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 4,
+                          p: 1
+                        }}
                       >
-                        X
-                      </Button>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </>
+                        <Typography noWrap variant="body2" sx={{ mb: 1, width: '100%', textAlign: 'center' }}>
+                          {image.link_url?.substring(0, 30)}...
+                        </Typography>
+                        <Button
+                          size="small"
+                          href={image.link_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          variant="outlined"
+                        >
+                          View Link
+                        </Button>
+                      </Box>
+                    )}
+                    <Button
+                      size="small"
+                      color="error"
+                      sx={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        minWidth: 30,
+                        p: 0
+                      }}
+                      onClick={() => handleDeleteTempImage(image.id)}
+                    >
+                      X
+                    </Button>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
           )}
         </Grid>
       </Grid>

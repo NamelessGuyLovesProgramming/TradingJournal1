@@ -15,17 +15,23 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
-import DeleteIcon from '@mui/icons-material/Delete'; // NEU: Import für Lösch-Icon
+import DeleteIcon from '@mui/icons-material/Delete';
+import SortIcon from '@mui/icons-material/Sort';
 import { format } from 'date-fns';
-import { getEntries, deleteJournal } from '../api/apiClient'; // NEU: Import für deleteJournal
+import { getEntries, deleteJournal } from '../api/apiClient';
 import { useJournal } from '../contexts/JournalContext';
 import EntryForm from '../components/EntryForm';
 import JournalForm from '../components/JournalForm';
 import ChecklistManager from '../components/ChecklistManager';
+import EntrySort from '../components/EntrySort';
 
 const JournalDetail = () => {
   const { journalId } = useParams();
@@ -33,20 +39,23 @@ const JournalDetail = () => {
   const { journals, selectJournal } = useJournal();
 
   const [entries, setEntries] = useState([]);
+  const [displayEntries, setDisplayEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openEntryDialog, setOpenEntryDialog] = useState(false);
   const [openSettingsDialog, setOpenSettingsDialog] = useState(false);
   const [openChecklistDialog, setOpenChecklistDialog] = useState(false);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // NEU: State für Lösch-Dialog
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [sortCriteria, setSortCriteria] = useState('date-desc');
 
   const fetchEntries = async () => {
     try {
       setLoading(true);
       const response = await getEntries(journalId);
-      setEntries(response.data.sort((a, b) =>
-        new Date(b.entry_date) - new Date(a.entry_date)
-      ));
+      const fetchedEntries = response.data;
+      setEntries(fetchedEntries);
+      // Apply initial sorting
+      sortEntries(fetchedEntries, sortCriteria);
       setError(null);
     } catch (err) {
       setError('Failed to load entries');
@@ -65,7 +74,63 @@ const JournalDetail = () => {
 
   const currentJournal = journals.find(j => j.id === Number(journalId));
 
-  // NEU: Funktion zum Löschen des Journals
+  const sortEntries = (entriesToSort, criteria) => {
+    let sortedEntries = [...entriesToSort];
+
+    switch (criteria) {
+      case 'date-desc':
+        sortedEntries.sort((a, b) => new Date(b.entry_date) - new Date(a.entry_date));
+        break;
+      case 'date-asc':
+        sortedEntries.sort((a, b) => new Date(a.entry_date) - new Date(b.entry_date));
+        break;
+      case 'result-win':
+        sortedEntries = sortedEntries.filter(entry => entry.result === 'Win');
+        break;
+      case 'result-loss':
+        sortedEntries = sortedEntries.filter(entry => entry.result === 'Loss');
+        break;
+      case 'result-be':
+        sortedEntries = sortedEntries.filter(entry => entry.result === 'BE');
+        break;
+      case 'result-pbe':
+        sortedEntries = sortedEntries.filter(entry => entry.result === 'PartialBE');
+        break;
+      case 'position-long':
+        sortedEntries = sortedEntries.filter(entry => entry.position_type === 'Long');
+        break;
+      case 'position-short':
+        sortedEntries = sortedEntries.filter(entry => entry.position_type === 'Short');
+        break;
+      case 'pnl-desc':
+        sortedEntries.sort((a, b) => {
+          const aPnl = a.pnl ? parseFloat(a.pnl) : 0;
+          const bPnl = b.pnl ? parseFloat(b.pnl) : 0;
+          return bPnl - aPnl;
+        });
+        break;
+      case 'pnl-asc':
+        sortedEntries.sort((a, b) => {
+          const aPnl = a.pnl ? parseFloat(a.pnl) : 0;
+          const bPnl = b.pnl ? parseFloat(b.pnl) : 0;
+          return aPnl - bPnl;
+        });
+        break;
+      case 'rating-desc':
+        sortedEntries.sort((a, b) => {
+          const aRating = a.trade_rating ? parseFloat(a.trade_rating) : 0;
+          const bRating = b.trade_rating ? parseFloat(b.trade_rating) : 0;
+          return bRating - aRating;
+        });
+        break;
+      default:
+        // Default to newest first
+        sortedEntries.sort((a, b) => new Date(b.entry_date) - new Date(a.entry_date));
+    }
+
+    setDisplayEntries(sortedEntries);
+  };
+
   const handleDeleteJournal = async () => {
     try {
       await deleteJournal(journalId);
@@ -74,6 +139,11 @@ const JournalDetail = () => {
       setError('Failed to delete journal');
       console.error(err);
     }
+  };
+
+  const handleSortChange = (criteria) => {
+    setSortCriteria(criteria);
+    sortEntries(entries, criteria);
   };
 
   const getResultColor = (result) => {
@@ -132,7 +202,6 @@ const JournalDetail = () => {
           >
             <BarChartIcon />
           </IconButton>
-          {/* NEU: Lösch-Button */}
           <IconButton
             color="error"
             onClick={() => setOpenDeleteDialog(true)}
@@ -152,13 +221,21 @@ const JournalDetail = () => {
         </Box>
       </Box>
 
+      {/* Sorting Control */}
+      <Box display="flex" alignItems="center" mb={3}>
+        <EntrySort onSortChange={handleSortChange} />
+        <Typography variant="body2" color="text.secondary">
+          {displayEntries.length} entries {sortCriteria !== 'date-desc' && sortCriteria !== 'date-asc' ? '(filtered)' : ''}
+        </Typography>
+      </Box>
+
       {currentJournal.description && (
         <Typography variant="body1" paragraph>
           {currentJournal.description}
         </Typography>
       )}
 
-      {entries.length === 0 ? (
+      {displayEntries.length === 0 ? (
         <Box textAlign="center" py={5}>
           <Typography variant="h6" gutterBottom>No entries yet</Typography>
           <Button
@@ -172,7 +249,7 @@ const JournalDetail = () => {
         </Box>
       ) : (
         <Grid container spacing={2}>
-          {entries.map((entry) => (
+          {displayEntries.map((entry) => (
             <Grid item xs={12} sm={6} md={4} key={entry.id}>
               <Card
                 sx={{
@@ -219,11 +296,11 @@ const JournalDetail = () => {
                     </Typography>
                   )}
 
-                    {currentJournal.has_emotions && entry.emotion && (
-                      <Typography variant="body2" mt={1}>
-                        Emotion: {entry.emotion}
-                      </Typography>
-                    )}
+                  {currentJournal.has_emotions && entry.emotion && (
+                    <Typography variant="body2" mt={1}>
+                      Emotion: {entry.emotion}
+                    </Typography>
+                  )}
 
                   {currentJournal.has_custom_field && entry.custom_field_value && (
                     <Typography variant="body2" mt={1}>
@@ -289,7 +366,7 @@ const JournalDetail = () => {
         </DialogActions>
       </Dialog>
 
-      {/* NEU: Journal-Löschdialog */}
+      {/* Journal-Löschdialog */}
       <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
         <DialogTitle>Journal löschen</DialogTitle>
         <DialogContent>
