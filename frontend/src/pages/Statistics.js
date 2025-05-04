@@ -22,7 +22,8 @@ import {
   ListItemIcon,
   ListItemText,
   Tabs,
-  Tab, // NEU: Tabs für verschiedene Statistikansichten
+  Tab,
+  Chip,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Bar, Pie, Line } from 'react-chartjs-2'; // NEU: Line-Chart hinzugefügt

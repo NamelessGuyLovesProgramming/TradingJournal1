@@ -2,7 +2,91 @@
   {
     "id": 1,
     "journal_id": 1,
-    "text": "15min FVG Respect",
+    "text": "1min FVG Respect",
     "order": 0
+  },
+  {
+    "id": 2,
+    "journal_id": 1,
+    "text": "5min FVG Respect",
+    "order": 1
+  },
+  {
+    "id": 3,
+    "journal_id": 1,
+    "text": "15min FVG Respect",
+    "order": 2
+  },
+  {
+    "id": 4,
+    "journal_id": 1,
+    "text": "IFVG",
+    "order": 3
+  },
+  {
+    "id": 5,
+    "journal_id": 1,
+    "text": "1min Sweep",
+    "order": 4
+  },
+  {
+    "id": 6,
+    "journal_id": 1,
+    "text": "15min Sweep",
+    "order": 5
+  },
+  {
+    "id": 7,
+    "journal_id": 1,
+    "text": "Sweep Low",
+    "order": 6
+  },
+  {
+    "id": 8,
+    "journal_id": 1,
+    "text": "Sweep High",
+    "order": 7
+  },
+  {
+    "id": 9,
+    "journal_id": 1,
+    "text": "Conformation Setup",
+    "order": 8
+  },
+  {
+    "id": 10,
+    "journal_id": 1,
+    "text": "Orderblock Respect",
+    "order": 9
+  },
+  {
+    "id": 11,
+    "journal_id": 1,
+    "text": "Sweep Orderblock",
+    "order": 10
+  },
+  {
+    "id": 12,
+    "journal_id": 1,
+    "text": "1min Entry",
+    "order": 11
+  },
+  {
+    "id": 13,
+    "journal_id": 1,
+    "text": "2min Entry",
+    "order": 12
+  },
+  {
+    "id": 14,
+    "journal_id": 1,
+    "text": "3min Entry",
+    "order": 13
+  },
+  {
+    "id": 15,
+    "journal_id": 1,
+    "text": "Keine FVG auf dem Weg",
+    "order": 14
   }
 ]

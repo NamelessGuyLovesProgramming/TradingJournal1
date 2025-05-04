@@ -110,3 +110,9 @@ def create_journal(data):
 
     new_journal = data_storage.create_journal(data)
     return jsonify(new_journal), 201
+
+@journal_bp.route("/journals/<int:journal_id>/checklist_templates", methods=["GET"])
+def get_checklist_templates(journal_id):
+    """Get all checklist templates for a journal."""
+    templates = data_storage.get_checklist_templates(journal_id)
+    return jsonify(templates)

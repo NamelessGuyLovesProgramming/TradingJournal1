@@ -1,4 +1,4 @@
-// src/components/ChecklistManager.js
+// src/components/ChecklistManager.js - Corrected version
 import React, { useState, useEffect } from 'react';
 import {
   List,
@@ -12,10 +12,10 @@ import {
   Divider,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { 
-  getChecklistTemplates, 
-  addChecklistTemplate, 
-  deleteChecklistTemplate 
+import {
+  getJournal,
+  addChecklistTemplate,
+  deleteChecklistTemplate
 } from '../api/apiClient';
 
 const ChecklistManager = ({ journalId, onComplete }) => {
@@ -27,8 +27,17 @@ const ChecklistManager = ({ journalId, onComplete }) => {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const response = await getChecklistTemplates(journalId);
-      setTemplates(response.data.sort((a, b) => a.order - b.order));
+      // Get templates from journal data instead of direct template endpoint
+      const response = await getJournal(journalId);
+      const journalData = response.data;
+
+      // Use checklist_templates from journal data
+      if (journalData && journalData.checklist_templates) {
+        setTemplates(journalData.checklist_templates.sort((a, b) => a.order - b.order));
+      } else {
+        setTemplates([]);
+      }
+
       setError(null);
     } catch (err) {
       setError('Failed to load checklist templates');
