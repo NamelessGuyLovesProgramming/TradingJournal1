@@ -1,4 +1,3 @@
-// src/pages/EntryDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -27,9 +26,10 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   ArrowBack as ArrowBackIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { getEntry, deleteEntry } from '../api/apiClient';
+import { getEntry, deleteEntry, deleteImage } from '../api/apiClient'; // Added deleteImage import
 import { useJournal } from '../contexts/JournalContext';
 import EntryForm from '../components/EntryForm';
 
@@ -79,13 +79,31 @@ const EntryDetail = () => {
   };
 
   const handleOpenImage = (image) => {
-    setSelectedImage(image);
-    setImageDialogOpen(true);
+    if (image.file_path) {
+      setSelectedImage(image);
+      setImageDialogOpen(true);
+    }
   };
 
   const handleCloseEditDialog = () => {
     setOpenEditDialog(false);
     fetchEntry(); // Refresh entry data after edit
+  };
+
+  const handleDeleteImage = async (imageId, category) => {
+    try {
+      await deleteImage(imageId);
+      // Update the entry's images directly to avoid a full refetch
+      const updatedImages = {...entry.images};
+      updatedImages[category] = updatedImages[category].filter(img => img.id !== imageId);
+      setEntry({
+        ...entry,
+        images: updatedImages
+      });
+    } catch (err) {
+      setError('Failed to delete image/link');
+      console.error(err);
+    }
   };
 
   if (loading) {
@@ -168,8 +186,14 @@ const EntryDetail = () => {
             </Typography>
 
             <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              {format(new Date(entry.entry_date), 'MMMM d, yyyy h:mm a')}
+              Started: {format(new Date(entry.entry_date), 'MMMM d, yyyy h:mm a')}
             </Typography>
+
+            {entry.end_date && (
+              <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                Ended: {format(new Date(entry.end_date), 'MMMM d, yyyy h:mm a')}
+              </Typography>
+            )}
 
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={6}>
@@ -199,6 +223,12 @@ const EntryDetail = () => {
               <Grid item xs={6}>
                 <Typography variant="body2" color="text.secondary">Initial R/R</Typography>
                 <Typography variant="body1">{entry.initial_rr !== null ? entry.initial_rr : 'N/A'}</Typography>
+              </Grid>
+
+              {/* Risk Percentage field */}
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">Risk (%)</Typography>
+                <Typography variant="body1">{entry.risk_percentage !== null ? `${entry.risk_percentage}%` : 'N/A'}</Typography>
               </Grid>
 
               {currentJournal?.has_sl_tp_fields && (
@@ -277,44 +307,144 @@ const EntryDetail = () => {
         </Typography>
       </Paper>
 
-      {/* Screenshots Section */}
+      {/* Screenshots & Links Section */}
       {(imagesByCategory.Before.length > 0 || imagesByCategory.After.length > 0) && (
         <Paper sx={{ p: 3 }} elevation={2}>
-          <Typography variant="h6" gutterBottom>Screenshots</Typography>
+          <Typography variant="h6" gutterBottom>Screenshots & Links</Typography>
 
           <Grid container spacing={3}>
-            {/* Before Screenshots */}
+            {/* Before Screenshots and Links */}
             {imagesByCategory.Before.length > 0 && (
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" gutterBottom>Before</Typography>
                 <ImageList cols={2} gap={8}>
                   {imagesByCategory.Before.map((image) => (
-                    <ImageListItem key={image.id} onClick={() => handleOpenImage(image)} sx={{ cursor: 'pointer' }}>
-                      <img
-                        src={image.file_path}
-                        alt="Before Trade Screenshot"
-                        loading="lazy"
-                        style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
-                      />
+                    <ImageListItem key={image.id} sx={{ cursor: 'pointer' }}>
+                      {image.file_path ? (
+                        // Regular image
+                        <img
+                          src={image.file_path}
+                          alt="Before Trade Screenshot"
+                          loading="lazy"
+                          style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
+                          onClick={() => handleOpenImage(image)}
+                        />
+                      ) : (
+                        // URL link
+                        <Box
+                          sx={{
+                            borderRadius: 4,
+                            height: 150,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'background.paper',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            p: 2
+                          }}
+                        >
+                          <LinkIcon sx={{ mb: 1, color: 'primary.main' }} />
+                          <Typography noWrap sx={{ mb: 1, maxWidth: '100%' }}>
+                            {image.link_url?.substring(0, 20)}...
+                          </Typography>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            href={image.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View Link
+                          </Button>
+                        </Box>
+                      )}
+                      <IconButton
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          bgcolor: 'rgba(0,0,0,0.4)',
+                          color: 'white',
+                          padding: '4px',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteImage(image.id, image.category);
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
                     </ImageListItem>
                   ))}
                 </ImageList>
               </Grid>
             )}
 
-            {/* After Screenshots */}
+            {/* After Screenshots and Links */}
             {imagesByCategory.After.length > 0 && (
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" gutterBottom>After</Typography>
                 <ImageList cols={2} gap={8}>
                   {imagesByCategory.After.map((image) => (
-                    <ImageListItem key={image.id} onClick={() => handleOpenImage(image)} sx={{ cursor: 'pointer' }}>
-                      <img
-                        src={image.file_path}
-                        alt="After Trade Screenshot"
-                        loading="lazy"
-                        style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
-                      />
+                    <ImageListItem key={image.id} sx={{ cursor: 'pointer' }}>
+                      {image.file_path ? (
+                        // Regular image
+                        <img
+                          src={image.file_path}
+                          alt="After Trade Screenshot"
+                          loading="lazy"
+                          style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
+                          onClick={() => handleOpenImage(image)}
+                        />
+                      ) : (
+                        // URL link
+                        <Box
+                          sx={{
+                            borderRadius: 4,
+                            height: 150,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'background.paper',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            p: 2
+                          }}
+                        >
+                          <LinkIcon sx={{ mb: 1, color: 'primary.main' }} />
+                          <Typography noWrap sx={{ mb: 1, maxWidth: '100%' }}>
+                            {image.link_url?.substring(0, 20)}...
+                          </Typography>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            href={image.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View Link
+                          </Button>
+                        </Box>
+                      )}
+                      <IconButton
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          bgcolor: 'rgba(0,0,0,0.4)',
+                          color: 'white',
+                          padding: '4px',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteImage(image.id, image.category);
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
                     </ImageListItem>
                   ))}
                 </ImageList>
@@ -366,7 +496,7 @@ const EntryDetail = () => {
         onClose={() => setImageDialogOpen(false)}
         maxWidth="md"
       >
-        {selectedImage && (
+        {selectedImage && selectedImage.file_path && (
           <Box p={1}>
             <IconButton
               sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.4)', color: 'white' }}

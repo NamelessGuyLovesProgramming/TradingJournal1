@@ -386,10 +386,12 @@ def create_entry(journal_id, data):
         'id': new_id,
         'journal_id': journal_id,
         'entry_date': entry_date,
+        'end_date': data.get('end_date'),  # New field for trade end date
         'symbol': data.get('symbol'),
         'position_type': data.get('position_type'),
         'strategy': strategy,
         'initial_rr': data.get('initial_rr'),
+        'risk_percentage': data.get('risk_percentage'),  # New risk field
         'pnl': data.get('pnl'),
         'result': data.get('result'),
         'confidence_level': data.get('confidence_level'),
@@ -398,7 +400,7 @@ def create_entry(journal_id, data):
         'stop_loss': data.get('stop_loss'),
         'take_profit': data.get('take_profit'),
         'custom_field_value': data.get('custom_field_value'),
-        'emotion': data.get('emotion')  # New emotion field
+        'emotion': data.get('emotion')
     }
 
     entries.append(new_entry)
@@ -518,8 +520,38 @@ def update_checklist_status(entry_id, template_id, checked):
 
 
 # Bild-Funktionen
-def upload_image(entry_id, file, category="Before"):  # Standardwert geändert zu "Before"
-    """Lädt ein Bild hoch und speichert die Metadaten."""
+# Also update the upload_image function to handle URL links:
+def upload_image(entry_id, file=None, category="Before", link_url=None):
+    """Uploads an image or adds a link for a specific journal entry."""
+    # Handle link URLs
+    if link_url:
+        images = load_data(IMAGES_FILE)
+        new_id = 1
+        if images:
+            new_id = max(i['id'] for i in images) + 1
+
+        current_time = datetime.datetime.utcnow().isoformat()
+
+        new_image = {
+            'id': new_id,
+            'entry_id': entry_id,
+            'file_path': None,
+            'link_url': link_url,
+            'category': category,
+            'uploaded_at': current_time
+        }
+
+        images.append(new_image)
+        save_data(IMAGES_FILE, images)
+
+        return {
+            'id': new_image['id'],
+            'link_url': new_image['link_url'],
+            'category': new_image['category'],
+            'uploaded_at': new_image['uploaded_at']
+        }
+
+    # Handle file uploads as before
     if not file:
         return None
 

@@ -88,5 +88,23 @@
     "journal_id": 1,
     "text": "Keine FVG auf dem Weg",
     "order": 14
+  },
+  {
+    "id": 16,
+    "journal_id": 1,
+    "text": "mit \"Current\" Trend",
+    "order": 15
+  },
+  {
+    "id": 17,
+    "journal_id": 1,
+    "text": "mit \"Overall\" Trend",
+    "order": 16
+  },
+  {
+    "id": 18,
+    "journal_id": 1,
+    "text": "Momentum",
+    "order": 17
   }
 ]

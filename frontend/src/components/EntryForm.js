@@ -1,4 +1,4 @@
-// src/components/EntryForm.js - Updated with emotions field
+// src/components/EntryForm.js - Updated with end date and risk percentage fields
 import React, { useState, useEffect } from 'react';
 import {
   TextField,
@@ -17,6 +17,8 @@ import {
   Checkbox,
   Tabs,
   Tab,
+  RadioGroup,
+  Radio,
 } from '@mui/material';
 import { format } from 'date-fns';
 import {
@@ -61,10 +63,12 @@ const tradingEmotions = [
 const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
   const [formData, setFormData] = useState({
     entry_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    end_date: '',  // New end date field
     symbol: '',
     position_type: '',
     strategy: '',
     initial_rr: '',
+    risk_percentage: '', // New risk percentage field
     pnl: '',
     result: '',
     confidence_level: 50,
@@ -73,7 +77,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
     stop_loss: '',
     take_profit: '',
     custom_field_value: '',
-    emotion: '', // New field for emotion
+    emotion: '',
     checklist_statuses: {}
   });
 
@@ -85,6 +89,8 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showStrategyInput, setShowStrategyInput] = useState(false);
+  const [uploadType, setUploadType] = useState('file'); // 'file' or 'link'
+  const [linkUrl, setLinkUrl] = useState('');
 
   // Load entry data for editing
   useEffect(() => {
@@ -98,6 +104,13 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
           // Format date for the form
           const entryDate = new Date(entry.entry_date);
           const formattedDate = format(entryDate, "yyyy-MM-dd'T'HH:mm");
+
+          // Format end date if it exists
+          let formattedEndDate = '';
+          if (entry.end_date) {
+            const endDate = new Date(entry.end_date);
+            formattedEndDate = format(endDate, "yyyy-MM-dd'T'HH:mm");
+          }
 
           // Prepare checklist data
           const checklist = {};
@@ -120,6 +133,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
           setFormData({
             ...entry,
             entry_date: formattedDate,
+            end_date: formattedEndDate,
             checklist_statuses: checklist,
           });
 
@@ -223,8 +237,43 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
     }
   };
 
+  const handleAddLink = async () => {
+    if (!linkUrl.trim()) return;
+
+    const category = tabValue === 0 ? 'Before' : 'After';
+
+    try {
+      // Call API to add link
+      const response = await fetch(`/api/entries/${entryId}/links`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: linkUrl.trim(),
+          category: category
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setImages({
+          ...images,
+          [category]: [...images[category], data],
+        });
+        setLinkUrl('');
+      } else {
+        setError(data.error || 'Failed to add link');
+      }
+    } catch (err) {
+      setError('Failed to add link');
+      console.error(err);
+    }
+  };
+
   const handleDeleteImage = async (imageId, category) => {
-    if (!window.confirm('Are you sure you want to delete this image?')) return;
+    if (!window.confirm('Are you sure you want to delete this image/link?')) return;
 
     try {
       await deleteImage(imageId);
@@ -233,7 +282,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
         [category]: images[category].filter(img => img.id !== imageId),
       });
     } catch (err) {
-      setError('Failed to delete image');
+      setError('Failed to delete image/link');
       console.error(err);
     }
   };
@@ -266,10 +315,22 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label="Date & Time"
+            label="Start Date & Time"
             type="datetime-local"
             name="entry_date"
             value={formData.entry_date}
+            onChange={handleChange}
+            InputLabelProps={{ shrink: true }}
+            margin="normal"
+          />
+
+          {/* New End Date field */}
+          <TextField
+            fullWidth
+            label="End Date & Time"
+            type="datetime-local"
+            name="end_date"
+            value={formData.end_date}
             onChange={handleChange}
             InputLabelProps={{ shrink: true }}
             margin="normal"
@@ -355,6 +416,22 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
             <Grid item xs={6}>
               <TextField
                 fullWidth
+                label="Risk Percentage (%)"
+                name="risk_percentage"
+                type="number"
+                step="0.01"
+                value={formData.risk_percentage}
+                onChange={handleChange}
+                helperText="e.g., 1.5 for 1.5% account risk"
+                margin="normal"
+              />
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
                 label="P&L"
                 name="pnl"
                 type="number"
@@ -409,7 +486,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
             </Grid>
           )}
 
-          {/* New Emotions Field */}
+          {/* Emotions Field */}
           {journalSettings?.has_emotions && (
             <FormControl fullWidth margin="normal">
               <InputLabel>Emotional State</InputLabel>
@@ -510,7 +587,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
           {entryId && (
             <>
               <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-                Screenshots
+                Screenshots & Links
               </Typography>
 
               <Tabs
@@ -523,38 +600,101 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
               </Tabs>
 
               <Box>
-                <input
-                  accept="image/*"
-                  id="image-upload"
-                  type="file"
-                  style={{ display: 'none' }}
-                  onChange={handleImageUpload}
-                />
-                <label htmlFor="image-upload">
-                  <Button
-                    variant="contained"
-                    component="span"
-                    disabled={!entryId}
-                  >
-                    Upload {tabValue === 0 ? 'Before' : 'After'} Image
-                  </Button>
-                </label>
+                <RadioGroup
+                  row
+                  value={uploadType}
+                  onChange={(e) => setUploadType(e.target.value)}
+                >
+                  <FormControlLabel value="file" control={<Radio />} label="Upload File" />
+                  <FormControlLabel value="link" control={<Radio />} label="Add Link" />
+                </RadioGroup>
+
+                {uploadType === 'file' ? (
+                  <>
+                    <input
+                      accept="image/*"
+                      id="image-upload"
+                      type="file"
+                      style={{ display: 'none' }}
+                      onChange={handleImageUpload}
+                    />
+                    <label htmlFor="image-upload">
+                      <Button
+                        variant="contained"
+                        component="span"
+                        disabled={!entryId}
+                      >
+                        Upload {tabValue === 0 ? 'Before' : 'After'} Image
+                      </Button>
+                    </label>
+                  </>
+                ) : (
+                  <Box display="flex" alignItems="center" mt={1}>
+                    <TextField
+                      fullWidth
+                      label={`${tabValue === 0 ? 'Before' : 'After'} URL`}
+                      value={linkUrl}
+                      onChange={(e) => setLinkUrl(e.target.value)}
+                      size="small"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={handleAddLink}
+                      disabled={!entryId || !linkUrl.trim()}
+                      sx={{ ml: 1 }}
+                    >
+                      Add Link
+                    </Button>
+                  </Box>
+                )}
               </Box>
 
               <Grid container spacing={1} sx={{ mt: 2 }}>
                 {images[tabValue === 0 ? 'Before' : 'After'].map(image => (
                   <Grid item xs={6} key={image.id}>
                     <Box position="relative">
-                      <img
-                        src={image.file_path}
-                        alt={`${image.category} Screenshot`}
-                        style={{
-                          width: '100%',
-                          height: 150,
-                          objectFit: 'cover',
-                          borderRadius: 4
-                        }}
-                      />
+                      {image.file_path ? (
+                        <img
+                          src={image.file_path}
+                          alt={`${image.category} Screenshot`}
+                          style={{
+                            width: '100%',
+                            height: 150,
+                            objectFit: 'cover',
+                            borderRadius: 4
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: 150,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'background.paper',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 4,
+                            p: 1
+                          }}
+                        >
+                          <Typography noWrap variant="body2" sx={{ mb: 1, width: '100%', textAlign: 'center' }}>
+                            {image.link_url?.substring(0, 30)}...
+                          </Typography>
+                          <Button
+                            size="small"
+                            href={image.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            variant="outlined"
+                          >
+                            View Link
+                          </Button>
+                        </Box>
+                      )}
                       <Button
                         size="small"
                         color="error"

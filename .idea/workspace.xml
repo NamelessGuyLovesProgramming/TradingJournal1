@@ -5,12 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf4835e3-b952-4e54-8fcf-c2b5f8c8041c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/backend/data/uploads/3a4164371dc648f38ca483932ad2c9da_NQ1_Sun 04 May '25_14-57-31.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/data/journals.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/journals.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/entries.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/entries.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/images.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/images.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/statuses.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/statuses.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/strategies.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/strategies.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/templates.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/templates.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/routes/journal_routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/routes/journal_routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ChecklistManager.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ChecklistManager.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Statistics.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Statistics.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/data_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/data_storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/JournalForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/JournalForm.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
