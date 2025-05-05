@@ -173,13 +173,26 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
     fetchData();
   }, [journalId]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
+// Locate the handleChange function in EntryForm.js and modify it:
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  // Update the form data with the new value
+  setFormData({
+    ...formData,
+    [name]: value,
+  });
+
+  // If entry_date (Start Date & Time) is being changed and end_date is empty,
+  // automatically update end_date to match the entry_date
+  if (name === 'entry_date' && !formData.end_date) {
+    setFormData(prevData => ({
+      ...prevData,
       [name]: value,
-    });
-  };
+      end_date: value // Set end_date to the same value as entry_date
+    }));
+  }
+};
 
   const handleChecklistChange = (templateId, checked) => {
     setFormData({

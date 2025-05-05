@@ -296,5 +296,25 @@
     "take_profit": "",
     "custom_field_value": "",
     "emotion": ""
+  },
+  {
+    "id": 20,
+    "journal_id": 2,
+    "entry_date": "2025-05-05T16:22",
+    "end_date": "2025-05-05T16:38",
+    "symbol": "NQ1!",
+    "position_type": "Short",
+    "strategy": "1min Sweep",
+    "initial_rr": "1.38",
+    "risk_percentage": "0.6",
+    "pnl": "48",
+    "result": "PartialBE",
+    "confidence_level": 60,
+    "trade_rating": 4,
+    "notes": "Dominiks Position im Livetrading",
+    "stop_loss": "",
+    "take_profit": "",
+    "custom_field_value": "",
+    "emotion": "Doubt"
   }
 ]
