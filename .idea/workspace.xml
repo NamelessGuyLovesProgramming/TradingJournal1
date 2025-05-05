@@ -5,10 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf4835e3-b952-4e54-8fcf-c2b5f8c8041c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/start_trading_journal.bat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/images.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/images.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/data_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/data_storage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/starten.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -558,20 +558,20 @@ def delete_image(image_id):
     image = next((i for i in images if i['id'] == image_id), None)
 
     if image:
-        file_path = os.path.join(UPLOADS_DIR, image['file_path'])
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except OSError as e:
-            print(f"Fehler beim Löschen der Bilddatei {image['file_path']}: {e}")
+        # Add a check to see if file_path exists and is not None
+        if image['file_path'] is not None:
+            file_path = os.path.join(UPLOADS_DIR, image['file_path'])
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except OSError as e:
+                print(f"Fehler beim Löschen der Bilddatei {image['file_path']}: {e}")
 
         images = [i for i in images if i['id'] != image_id]
         save_data(IMAGES_FILE, images)
         return True
 
     return False
-
-
 # Statistik-Funktionen
 
 def calculate_checklist_usage(journal_id, entries):

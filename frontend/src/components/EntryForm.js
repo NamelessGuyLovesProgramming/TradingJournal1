@@ -42,14 +42,15 @@ const imageCategories = ['Before', 'After'];
 
 // Simplified trading emotions list as requested
 const tradingEmotions = [
-  'Calm',
-  'Focused',
-  'Fear',
-  'Boredom',
-  'Indecision',
-  'Disappointment',
-  'Satisfaction',
-  'Relief'
+  'Confidence',
+  'Doubt',
+  'Frustration',
+  'Euphoria',
+  'Indifference',
+  'Neutral',
+  'Revenge Trading',
+  'Self-Deception',
+  'Impatience',
 ];
 
 const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
