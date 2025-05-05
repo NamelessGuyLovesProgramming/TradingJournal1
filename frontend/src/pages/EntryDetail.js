@@ -139,11 +139,37 @@ const EntryDetail = () => {
     return 'info'; // For neutral emotions
   };
 
-  // Group images by category
-  const imagesByCategory = {
-    Before: entry.images?.filter(img => img.category === 'Before') || [],
-    After: entry.images?.filter(img => img.category === 'After') || [],
+  // Get valid images only - using the most reliable null checking pattern
+  const getValidImages = () => {
+    if (!entry || !entry.images || !Array.isArray(entry.images)) {
+      return { Before: [], After: [] };
+    }
+
+    // Filter out any entries with null or 'None' file paths that don't have valid links
+    const validImages = entry.images.filter(img => {
+      // Check if file_path is valid (not null, undefined, 'None', or empty string)
+      const hasValidFile = img.file_path != null &&
+                         img.file_path !== 'None' &&
+                         typeof img.file_path === 'string' &&
+                         img.file_path.trim() !== '';
+
+      // Check if link_url is valid (not null, undefined, or empty string)
+      const hasValidLink = img.link_url != null &&
+                         typeof img.link_url === 'string' &&
+                         img.link_url.trim() !== '';
+
+      // Only include entries with at least one valid content
+      return hasValidFile || hasValidLink;
+    });
+
+    return {
+      Before: validImages.filter(img => img.category === 'Before'),
+      After: validImages.filter(img => img.category === 'After')
+    };
   };
+
+  // Get validated image categories
+  const imagesByCategory = getValidImages();
 
   return (
     <Box>
@@ -307,21 +333,24 @@ const EntryDetail = () => {
         </Typography>
       </Paper>
 
-      {/* Screenshots & Links Section */}
+      {/* Screenshots & Links Section - Only show if there are valid images or links */}
       {(imagesByCategory.Before.length > 0 || imagesByCategory.After.length > 0) && (
         <Paper sx={{ p: 3 }} elevation={2}>
           <Typography variant="h6" gutterBottom>Screenshots & Links</Typography>
 
           <Grid container spacing={3}>
-            {/* Before Screenshots and Links */}
+            {/* Before Screenshots and Links - Only show if there are valid items */}
             {imagesByCategory.Before.length > 0 && (
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={imagesByCategory.After.length > 0 ? 6 : 12}>
                 <Typography variant="subtitle1" gutterBottom>Before</Typography>
                 <ImageList cols={2} gap={8}>
                   {imagesByCategory.Before.map((img) => (
                     <ImageListItem key={img.id} sx={{ cursor: img.file_path ? 'pointer' : 'default' }}>
-                      {img.file_path ? (
-                        // Regular image
+                      {/* Only render image if file_path is valid */}
+                      {img.file_path != null &&
+                       img.file_path !== 'None' &&
+                       typeof img.file_path === 'string' &&
+                       img.file_path.trim() !== '' && (
                         <img
                           src={img.file_path}
                           alt="Before Trade Screenshot"
@@ -329,8 +358,11 @@ const EntryDetail = () => {
                           style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
                           onClick={() => handleOpenImage(img)}
                         />
-                      ) : img.link_url ? (
-                        // URL link - only show this if there's a link_url
+                      )}
+                      {/* Only render link box if link_url is valid */}
+                      {img.link_url != null &&
+                       typeof img.link_url === 'string' &&
+                       img.link_url.trim() !== '' && (
                         <Box
                           sx={{
                             borderRadius: 4,
@@ -359,7 +391,7 @@ const EntryDetail = () => {
                             View Link
                           </Button>
                         </Box>
-                      ) : null}
+                      )}
                       <IconButton
                         sx={{
                           position: 'absolute',
@@ -382,15 +414,18 @@ const EntryDetail = () => {
               </Grid>
             )}
 
-            {/* After Screenshots and Links */}
+            {/* After Screenshots and Links - Only show if there are valid items */}
             {imagesByCategory.After.length > 0 && (
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={imagesByCategory.Before.length > 0 ? 6 : 12}>
                 <Typography variant="subtitle1" gutterBottom>After</Typography>
                 <ImageList cols={2} gap={8}>
                   {imagesByCategory.After.map((img) => (
                     <ImageListItem key={img.id} sx={{ cursor: img.file_path ? 'pointer' : 'default' }}>
-                      {img.file_path ? (
-                        // Regular image
+                      {/* Only render image if file_path is valid */}
+                      {img.file_path != null &&
+                       img.file_path !== 'None' &&
+                       typeof img.file_path === 'string' &&
+                       img.file_path.trim() !== '' && (
                         <img
                           src={img.file_path}
                           alt="After Trade Screenshot"
@@ -398,8 +433,11 @@ const EntryDetail = () => {
                           style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
                           onClick={() => handleOpenImage(img)}
                         />
-                      ) : img.link_url ? (
-                        // URL link - only show this if there's a link_url
+                      )}
+                      {/* Only render link box if link_url is valid */}
+                      {img.link_url != null &&
+                       typeof img.link_url === 'string' &&
+                       img.link_url.trim() !== '' && (
                         <Box
                           sx={{
                             borderRadius: 4,
@@ -428,7 +466,7 @@ const EntryDetail = () => {
                             View Link
                           </Button>
                         </Box>
-                      ) : null}
+                      )}
                       <IconButton
                         sx={{
                           position: 'absolute',
