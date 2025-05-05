@@ -1,3 +1,4 @@
+// src/pages/EntryDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -29,7 +30,7 @@ import {
   Link as LinkIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { getEntry, deleteEntry, deleteImage } from '../api/apiClient'; // Added deleteImage import
+import { getEntry, deleteEntry, deleteImage } from '../api/apiClient';
 import { useJournal } from '../contexts/JournalContext';
 import EntryForm from '../components/EntryForm';
 
@@ -94,8 +95,7 @@ const EntryDetail = () => {
     try {
       await deleteImage(imageId);
       // Update the entry's images directly to avoid a full refetch
-      const updatedImages = {...entry.images};
-      updatedImages[category] = updatedImages[category].filter(img => img.id !== imageId);
+      const updatedImages = entry.images.filter(img => img.id !== imageId);
       setEntry({
         ...entry,
         images: updatedImages
@@ -318,19 +318,19 @@ const EntryDetail = () => {
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" gutterBottom>Before</Typography>
                 <ImageList cols={2} gap={8}>
-                  {imagesByCategory.Before.map((image) => (
-                    <ImageListItem key={image.id} sx={{ cursor: 'pointer' }}>
-                      {image.file_path ? (
+                  {imagesByCategory.Before.map((img) => (
+                    <ImageListItem key={img.id} sx={{ cursor: img.file_path ? 'pointer' : 'default' }}>
+                      {img.file_path ? (
                         // Regular image
                         <img
-                          src={image.file_path}
+                          src={img.file_path}
                           alt="Before Trade Screenshot"
                           loading="lazy"
                           style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
-                          onClick={() => handleOpenImage(image)}
+                          onClick={() => handleOpenImage(img)}
                         />
-                      ) : (
-                        // URL link
+                      ) : img.link_url ? (
+                        // URL link - only show this if there's a link_url
                         <Box
                           sx={{
                             borderRadius: 4,
@@ -347,19 +347,19 @@ const EntryDetail = () => {
                         >
                           <LinkIcon sx={{ mb: 1, color: 'primary.main' }} />
                           <Typography noWrap sx={{ mb: 1, maxWidth: '100%' }}>
-                            {image.link_url?.substring(0, 20)}...
+                            {img.link_url?.substring(0, 20)}...
                           </Typography>
                           <Button
                             size="small"
                             variant="outlined"
-                            href={image.link_url}
+                            href={img.link_url}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
                             View Link
                           </Button>
                         </Box>
-                      )}
+                      ) : null}
                       <IconButton
                         sx={{
                           position: 'absolute',
@@ -371,7 +371,7 @@ const EntryDetail = () => {
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteImage(image.id, image.category);
+                          handleDeleteImage(img.id, img.category);
                         }}
                       >
                         <DeleteIcon fontSize="small" />
@@ -387,19 +387,19 @@ const EntryDetail = () => {
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" gutterBottom>After</Typography>
                 <ImageList cols={2} gap={8}>
-                  {imagesByCategory.After.map((image) => (
-                    <ImageListItem key={image.id} sx={{ cursor: 'pointer' }}>
-                      {image.file_path ? (
+                  {imagesByCategory.After.map((img) => (
+                    <ImageListItem key={img.id} sx={{ cursor: img.file_path ? 'pointer' : 'default' }}>
+                      {img.file_path ? (
                         // Regular image
                         <img
-                          src={image.file_path}
+                          src={img.file_path}
                           alt="After Trade Screenshot"
                           loading="lazy"
                           style={{ borderRadius: 4, height: 150, objectFit: 'cover' }}
-                          onClick={() => handleOpenImage(image)}
+                          onClick={() => handleOpenImage(img)}
                         />
-                      ) : (
-                        // URL link
+                      ) : img.link_url ? (
+                        // URL link - only show this if there's a link_url
                         <Box
                           sx={{
                             borderRadius: 4,
@@ -416,19 +416,19 @@ const EntryDetail = () => {
                         >
                           <LinkIcon sx={{ mb: 1, color: 'primary.main' }} />
                           <Typography noWrap sx={{ mb: 1, maxWidth: '100%' }}>
-                            {image.link_url?.substring(0, 20)}...
+                            {img.link_url?.substring(0, 20)}...
                           </Typography>
                           <Button
                             size="small"
                             variant="outlined"
-                            href={image.link_url}
+                            href={img.link_url}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
                             View Link
                           </Button>
                         </Box>
-                      )}
+                      ) : null}
                       <IconButton
                         sx={{
                           position: 'absolute',
@@ -440,7 +440,7 @@ const EntryDetail = () => {
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteImage(image.id, image.category);
+                          handleDeleteImage(img.id, img.category);
                         }}
                       >
                         <DeleteIcon fontSize="small" />

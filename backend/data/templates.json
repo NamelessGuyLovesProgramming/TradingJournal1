@@ -166,5 +166,35 @@
     "journal_id": 2,
     "text": "15min FVG Respect",
     "order": 9
+  },
+  {
+    "id": 29,
+    "journal_id": 2,
+    "text": "Sweep Low",
+    "order": 10
+  },
+  {
+    "id": 30,
+    "journal_id": 2,
+    "text": "Sweep High",
+    "order": 11
+  },
+  {
+    "id": 31,
+    "journal_id": 2,
+    "text": "mit \"Current\" Trend",
+    "order": 12
+  },
+  {
+    "id": 32,
+    "journal_id": 2,
+    "text": "mit \"Overall\" Trend",
+    "order": 13
+  },
+  {
+    "id": 33,
+    "journal_id": 2,
+    "text": "Momentum",
+    "order": 14
   }
 ]

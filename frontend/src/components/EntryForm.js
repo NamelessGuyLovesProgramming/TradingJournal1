@@ -23,7 +23,7 @@ import {
   ImageListItem,
   IconButton,
 } from '@mui/material';
-import { DeleteIcon } from '@mui/icons-material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { format } from 'date-fns';
 import {
   createEntry,
@@ -277,6 +277,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
         const data = await response.json();
 
         if (response.ok) {
+          // Update the UI with the new link
           setImages({
             ...images,
             [category]: [...images[category], data],
@@ -762,7 +763,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
                           borderRadius: 4
                         }}
                       />
-                    ) : (
+                    ) : image.link_url ? (
                       <Box
                         sx={{
                           width: '100%',
@@ -791,7 +792,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
                           View Link
                         </Button>
                       </Box>
-                    )}
+                    ) : null}
                     <Button
                       size="small"
                       color="error"
@@ -829,7 +830,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
                           borderRadius: 4
                         }}
                       />
-                    ) : (
+                    ) : image.link_url ? (
                       <Box
                         sx={{
                           width: '100%',
@@ -858,7 +859,7 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
                           View Link
                         </Button>
                       </Box>
-                    )}
+                    ) : null}
                     <Button
                       size="small"
                       color="error"

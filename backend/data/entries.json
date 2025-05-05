@@ -276,5 +276,25 @@
     "take_profit": "",
     "custom_field_value": "",
     "emotion": "Indecision"
+  },
+  {
+    "id": 19,
+    "journal_id": 2,
+    "entry_date": "2025-05-05T15:05",
+    "end_date": "2025-05-05T15:08",
+    "symbol": "NQ1",
+    "position_type": "Short",
+    "strategy": "1min Sweep",
+    "initial_rr": "1.4",
+    "risk_percentage": "0.25",
+    "pnl": "75",
+    "result": "Win",
+    "confidence_level": 70,
+    "trade_rating": 4,
+    "notes": "",
+    "stop_loss": "",
+    "take_profit": "",
+    "custom_field_value": "",
+    "emotion": ""
   }
 ]

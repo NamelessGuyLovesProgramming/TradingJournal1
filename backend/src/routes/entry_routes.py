@@ -49,6 +49,26 @@ def get_journal_entries(journal_id):
     entries = data_storage.get_entries(journal_id)
     return jsonify(entries)
 
+@entry_bp.route("/entries/<int:entry_id>/links", methods=["POST"])
+def add_entry_link(entry_id):
+    """Add a link for a specific journal entry."""
+    entry = data_storage.get_entry(entry_id)
+    if not entry:
+        return jsonify({"error": "Entry not found"}), 404
+
+    data = request.get_json()
+    if not data or not data.get("url"):
+        return jsonify({"error": "URL is required"}), 400
+
+    category = data.get("category", "Before")
+    if category not in ["Before", "After"]:
+        category = "Before"  # Default category
+
+    new_link = data_storage.upload_image(entry_id, file=None, category=category, link_url=data.get("url"))
+    if new_link:
+        return jsonify(new_link), 201
+    else:
+        return jsonify({"error": "Failed to save link"}), 500
 
 @entry_bp.route("/journals/<int:journal_id>/entries", methods=["POST"])
 def create_journal_entry(journal_id):
@@ -64,6 +84,27 @@ def create_journal_entry(journal_id):
     entry = data_storage.create_entry(journal_id, data)
     return jsonify(entry), 201
 
+
+@entry_bp.route("/entries/<int:entry_id>/links", methods=["POST"])
+def add_entry_link_url(entry_id):
+    """Add a link for a specific journal entry."""
+    entry = data_storage.get_entry(entry_id)
+    if not entry:
+        return jsonify({"error": "Entry not found"}), 404
+
+    data = request.get_json()
+    if not data or not data.get("url"):
+        return jsonify({"error": "URL is required"}), 400
+
+    category = data.get("category", "Before")
+    if category not in ["Before", "After"]:
+        category = "Before"  # Default category
+
+    new_link = data_storage.upload_image(entry_id, file=None, category=category, link_url=data.get("url"))
+    if new_link:
+        return jsonify(new_link), 201
+    else:
+        return jsonify({"error": "Failed to save link"}), 500
 
 @entry_bp.route("/entries/<int:entry_id>", methods=["GET"])
 def get_journal_entry(entry_id):

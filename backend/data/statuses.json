@@ -1133,5 +1133,55 @@
     "entry_id": 17,
     "template_id": 18,
     "checked": true
+  },
+  {
+    "entry_id": 19,
+    "template_id": 19,
+    "checked": false
+  },
+  {
+    "entry_id": 19,
+    "template_id": 20,
+    "checked": true
+  },
+  {
+    "entry_id": 19,
+    "template_id": 21,
+    "checked": false
+  },
+  {
+    "entry_id": 19,
+    "template_id": 22,
+    "checked": false
+  },
+  {
+    "entry_id": 19,
+    "template_id": 23,
+    "checked": true
+  },
+  {
+    "entry_id": 19,
+    "template_id": 24,
+    "checked": true
+  },
+  {
+    "entry_id": 19,
+    "template_id": 25,
+    "checked": true
+  },
+  {
+    "entry_id": 19,
+    "template_id": 26,
+    "checked": false
+  },
+  {
+    "entry_id": 19,
+    "template_id": 27,
+    "checked": false
+  },
+  {
+    "entry_id": 19,
+    "template_id": 28,
+    "checked": true
   }
 ]

@@ -5,13 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf4835e3-b952-4e54-8fcf-c2b5f8c8041c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/backend/data/uploads/e24ce3fa482246678867c424e4bbf15e_NQ1_Sun 04 May '25_16-19-54.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/entries.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/entries.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/data/journals.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/journals.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/images.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/images.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/statuses.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/statuses.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/data/strategies.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/strategies.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/templates.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/templates.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/data_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/data_storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/routes/entry_routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/routes/entry_routes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/EntryForm.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EntryDetail.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -121,22 +124,22 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>585</line>
+          <line>544</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>637</line>
+          <line>596</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>647</line>
+          <line>606</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>900</line>
+          <line>859</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
       </breakpoints>

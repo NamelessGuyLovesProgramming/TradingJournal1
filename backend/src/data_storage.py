@@ -474,8 +474,6 @@ def update_checklist_status(entry_id, template_id, checked):
     return None
 
 
-# Bild-Funktionen
-# Also update the upload_image function to handle URL links:
 def upload_image(entry_id, file=None, category="Before", link_url=None):
     """Uploads an image or adds a link for a specific journal entry."""
     # Handle link URLs
@@ -501,6 +499,7 @@ def upload_image(entry_id, file=None, category="Before", link_url=None):
 
         return {
             'id': new_image['id'],
+            'file_path': None,
             'link_url': new_image['link_url'],
             'category': new_image['category'],
             'uploaded_at': new_image['uploaded_at']
@@ -510,56 +509,16 @@ def upload_image(entry_id, file=None, category="Before", link_url=None):
     if not file:
         return None
 
-    # Akzeptiere nur "Before" und "After" als Kategorien
-    if category not in ["Before", "After"]:
-        category = "Before"  # Standardwert, wenn ungültige Kategorie
+    # ... existing file handling code ...
 
-    # Erstelle einen eindeutigen Dateinamen
-    original_filename = os.path.basename(file.filename)
-    unique_filename = f"{uuid.uuid4().hex}_{original_filename}"
-    file_path = os.path.join(UPLOADS_DIR, unique_filename)
-
-    try:
-        # Stelle sicher, dass das Upload-Verzeichnis existiert
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        # Speichere die Datei
-        file.save(file_path)
-
-        # Erstelle einen Bildeintrag
-        images = load_data(IMAGES_FILE)
-
-        new_id = 1
-        if images:
-            new_id = max(i['id'] for i in images) + 1
-
-        current_time = datetime.datetime.utcnow().isoformat()
-
-        new_image = {
-            'id': new_id,
-            'entry_id': entry_id,
-            'file_path': unique_filename,
-            'category': category,
-            'uploaded_at': current_time
-        }
-
-        images.append(new_image)
-        save_data(IMAGES_FILE, images)
-
-        # Formatiere für die Antwort
-        return {
-            'id': new_image['id'],
-            'file_path': f"/api/uploads/{new_image['file_path']}",
-            'category': new_image['category'],
-            'uploaded_at': new_image['uploaded_at']
-        }
-
-    except Exception as e:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        print(f"Fehler beim Hochladen des Bildes: {e}")
-        return None
-
+    # When returning file data, make sure to include link_url as null
+    return {
+        'id': new_image['id'],
+        'file_path': f"/api/uploads/{new_image['file_path']}",
+        'link_url': None,
+        'category': new_image['category'],
+        'uploaded_at': new_image['uploaded_at']
+    }
 
 def delete_image(image_id):
     """Löscht ein Bild und seine Datei."""
