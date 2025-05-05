@@ -14,5 +14,9 @@
   {
     "id": 4,
     "name": "1min Sweep"
+  },
+  {
+    "id": 5,
+    "name": "AMD-Pattern"
   }
 ]

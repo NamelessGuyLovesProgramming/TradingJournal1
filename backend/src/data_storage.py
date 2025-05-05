@@ -1160,7 +1160,7 @@ def calculate_checklist_win_rates(journal_id, entries):
 
             if entry_status:
                 if entry_status['checked']:
-                    entry_status['checked_total_with_result'] += 1
+                    item_stats[template_id]["checked_total_with_result"] += 1
                     if is_positive:
                         item_stats[template_id]["checked_positive"] += 1
                     elif is_loss:
@@ -1200,7 +1200,6 @@ def calculate_checklist_win_rates(journal_id, entries):
     results.sort(key=lambda x: x["win_rate_diff"], reverse=True)
 
     return results
-
 
 def calculate_emotion_performance(entries):
     """Berechnet die Performance nach emotionalen Zuständen."""

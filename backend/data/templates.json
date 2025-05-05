@@ -106,5 +106,65 @@
     "journal_id": 1,
     "text": "Momentum",
     "order": 17
+  },
+  {
+    "id": 19,
+    "journal_id": 2,
+    "text": "1min Entry",
+    "order": 0
+  },
+  {
+    "id": 20,
+    "journal_id": 2,
+    "text": "2min Entry",
+    "order": 1
+  },
+  {
+    "id": 21,
+    "journal_id": 2,
+    "text": "3min Entry",
+    "order": 2
+  },
+  {
+    "id": 22,
+    "journal_id": 2,
+    "text": "4min Entry",
+    "order": 3
+  },
+  {
+    "id": 23,
+    "journal_id": 2,
+    "text": "IFVG",
+    "order": 4
+  },
+  {
+    "id": 24,
+    "journal_id": 2,
+    "text": "1min Sweep",
+    "order": 5
+  },
+  {
+    "id": 25,
+    "journal_id": 2,
+    "text": "15min Sweep",
+    "order": 6
+  },
+  {
+    "id": 26,
+    "journal_id": 2,
+    "text": "1min FVG Respect",
+    "order": 7
+  },
+  {
+    "id": 27,
+    "journal_id": 2,
+    "text": "5min FVG Respect",
+    "order": 8
+  },
+  {
+    "id": 28,
+    "journal_id": 2,
+    "text": "15min FVG Respect",
+    "order": 9
   }
 ]
