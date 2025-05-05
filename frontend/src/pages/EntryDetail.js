@@ -1,4 +1,4 @@
-// src/pages/EntryDetail.js
+// src/pages/EntryDetail.js - Korrigierte Version
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -80,7 +80,8 @@ const EntryDetail = () => {
   };
 
   const handleOpenImage = (image) => {
-    if (image.file_path) {
+    // Nur Bilder mit gültigem Pfad öffnen
+    if (image && image.file_path && image.file_path !== 'None' && image.file_path !== 'null') {
       setSelectedImage(image);
       setImageDialogOpen(true);
     }
@@ -139,26 +140,27 @@ const EntryDetail = () => {
     return 'info'; // For neutral emotions
   };
 
-  // Get valid images only - using the most reliable null checking pattern
+  // Verbesserte Funktion zum Filtern von gültigen Bildern
   const getValidImages = () => {
     if (!entry || !entry.images || !Array.isArray(entry.images)) {
       return { Before: [], After: [] };
     }
 
-    // Filter out any entries with null or 'None' file paths that don't have valid links
+    // Verbesserte Validierung: Filtere "None" Werte und null-Werte besser
     const validImages = entry.images.filter(img => {
-      // Check if file_path is valid (not null, undefined, 'None', or empty string)
-      const hasValidFile = img.file_path != null &&
-                         img.file_path !== 'None' &&
-                         typeof img.file_path === 'string' &&
-                         img.file_path.trim() !== '';
+      // Für Bild-URLs: Prüfe, ob file_path gültig ist (nicht null, None oder leerer String)
+      const hasValidFile = img.file_path &&
+                        img.file_path !== 'None' &&
+                        img.file_path !== 'null' &&
+                        typeof img.file_path === 'string' &&
+                        img.file_path.trim() !== '';
 
-      // Check if link_url is valid (not null, undefined, or empty string)
-      const hasValidLink = img.link_url != null &&
-                         typeof img.link_url === 'string' &&
-                         img.link_url.trim() !== '';
+      // Für Links: Prüfe, ob link_url gültig ist
+      const hasValidLink = img.link_url &&
+                        typeof img.link_url === 'string' &&
+                        img.link_url.trim() !== '';
 
-      // Only include entries with at least one valid content
+      // Nur Einträge einbeziehen, die entweder ein gültiges Bild ODER einen gültigen Link haben
       return hasValidFile || hasValidLink;
     });
 
@@ -168,7 +170,7 @@ const EntryDetail = () => {
     };
   };
 
-  // Get validated image categories
+  // Hole validierte Bildkategorien
   const imagesByCategory = getValidImages();
 
   return (
@@ -345,12 +347,9 @@ const EntryDetail = () => {
                 <Typography variant="subtitle1" gutterBottom>Before</Typography>
                 <ImageList cols={2} gap={8}>
                   {imagesByCategory.Before.map((img) => (
-                    <ImageListItem key={img.id} sx={{ cursor: img.file_path ? 'pointer' : 'default' }}>
-                      {/* Only render image if file_path is valid */}
-                      {img.file_path != null &&
-                       img.file_path !== 'None' &&
-                       typeof img.file_path === 'string' &&
-                       img.file_path.trim() !== '' && (
+                    <ImageListItem key={img.id} sx={{ cursor: img.file_path && img.file_path !== 'None' ? 'pointer' : 'default' }}>
+                      {/* Verbesserter Bildercode: Nur Bilder mit gültigem Pfad rendern */}
+                      {img.file_path && img.file_path !== 'None' && img.file_path !== 'null' && (
                         <img
                           src={img.file_path}
                           alt="Before Trade Screenshot"
@@ -359,10 +358,8 @@ const EntryDetail = () => {
                           onClick={() => handleOpenImage(img)}
                         />
                       )}
-                      {/* Only render link box if link_url is valid */}
-                      {img.link_url != null &&
-                       typeof img.link_url === 'string' &&
-                       img.link_url.trim() !== '' && (
+                      {/* Nur Link-Box rendern, wenn link_url gültig ist */}
+                      {img.link_url && (
                         <Box
                           sx={{
                             borderRadius: 4,
@@ -420,12 +417,9 @@ const EntryDetail = () => {
                 <Typography variant="subtitle1" gutterBottom>After</Typography>
                 <ImageList cols={2} gap={8}>
                   {imagesByCategory.After.map((img) => (
-                    <ImageListItem key={img.id} sx={{ cursor: img.file_path ? 'pointer' : 'default' }}>
-                      {/* Only render image if file_path is valid */}
-                      {img.file_path != null &&
-                       img.file_path !== 'None' &&
-                       typeof img.file_path === 'string' &&
-                       img.file_path.trim() !== '' && (
+                    <ImageListItem key={img.id} sx={{ cursor: img.file_path && img.file_path !== 'None' ? 'pointer' : 'default' }}>
+                      {/* Verbesserter Bildercode: Nur Bilder mit gültigem Pfad rendern */}
+                      {img.file_path && img.file_path !== 'None' && img.file_path !== 'null' && (
                         <img
                           src={img.file_path}
                           alt="After Trade Screenshot"
@@ -434,10 +428,8 @@ const EntryDetail = () => {
                           onClick={() => handleOpenImage(img)}
                         />
                       )}
-                      {/* Only render link box if link_url is valid */}
-                      {img.link_url != null &&
-                       typeof img.link_url === 'string' &&
-                       img.link_url.trim() !== '' && (
+                      {/* Nur Link-Box rendern, wenn link_url gültig ist */}
+                      {img.link_url && (
                         <Box
                           sx={{
                             borderRadius: 4,
@@ -534,7 +526,7 @@ const EntryDetail = () => {
         onClose={() => setImageDialogOpen(false)}
         maxWidth="md"
       >
-        {selectedImage && selectedImage.file_path && (
+        {selectedImage && selectedImage.file_path && selectedImage.file_path !== 'None' && selectedImage.file_path !== 'null' && (
           <Box p={1}>
             <IconButton
               sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.4)', color: 'white' }}

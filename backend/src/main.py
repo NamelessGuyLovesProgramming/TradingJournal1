@@ -27,11 +27,25 @@ app.register_blueprint(stats_bp, url_prefix='/api')
 # Route zum Bereitstellen hochgeladener Dateien (wird für die API benötigt)
 @app.route('/api/uploads/<path:filename>')
 def serve_upload(filename):
+    """
+    Dient zum Bereitstellen hochgeladener Dateien
+    Fügt zusätzliche Fehlerprüfung für "None"-Werte hinzu
+    """
+    # Überprüfen, ob der Dateiname "None" ist oder nicht existiert
+    if filename == "None" or not filename:
+        return jsonify({"error": "Ungültiger Dateipfad"}), 400
+
     upload_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'uploads')
+
     # Sicherheitsprüfung: sicherstellen, dass der Dateiname sicher ist
     safe_path = os.path.abspath(os.path.join(upload_dir, filename))
     if not safe_path.startswith(os.path.abspath(upload_dir)):
         return jsonify({"error": "Ungültiger Dateipfad"}), 400
+
+    # Überprüfen, ob die Datei existiert
+    if not os.path.exists(safe_path):
+        return jsonify({"error": "Datei nicht gefunden"}), 404
+
     return send_from_directory(upload_dir, filename)
 
 if __name__ == '__main__':

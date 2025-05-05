@@ -308,13 +308,16 @@ def get_entry(entry_id):
         images = load_data(IMAGES_FILE)
         entry_images = [i for i in images if i['entry_id'] == entry_id]
 
+        # Korrigiere Bildpfade und entferne "None"-Werte
         for img in entry_images:
-            img['file_path'] = f"/api/uploads/{img['file_path']}"
+            if img['file_path']:  # Nur hinzufügen wenn file_path nicht None ist
+                img['file_path'] = f"/api/uploads/{img['file_path']}"
+            else:
+                img['file_path'] = None  # Explizit auf None setzen statt "None" String
 
         entry['images'] = entry_images
 
     return entry
-
 
 def create_entry(journal_id, data):
     """Erstellt einen neuen Eintrag."""
@@ -488,7 +491,7 @@ def upload_image(entry_id, file=None, category="Before", link_url=None):
         new_image = {
             'id': new_id,
             'entry_id': entry_id,
-            'file_path': None,
+            'file_path': None,  # Explizit None setzen
             'link_url': link_url,
             'category': category,
             'uploaded_at': current_time
@@ -499,23 +502,52 @@ def upload_image(entry_id, file=None, category="Before", link_url=None):
 
         return {
             'id': new_image['id'],
-            'file_path': None,
+            'file_path': None,  # Explizit None zurückgeben
             'link_url': new_image['link_url'],
             'category': new_image['category'],
             'uploaded_at': new_image['uploaded_at']
         }
 
-    # Handle file uploads as before
+    # Handle file uploads
     if not file:
         return None
 
-    # ... existing file handling code ...
+    # Erstelle einen eindeutigen Dateinamen
+    filename = secure_filename(file.filename)
+    unique_filename = f"{uuid.uuid4()}_{filename}"
+    file_path = os.path.join(UPLOADS_DIR, unique_filename)
 
-    # When returning file data, make sure to include link_url as null
+    # Speichere die Datei
+    try:
+        file.save(file_path)
+    except Exception as e:
+        print(f"Fehler beim Speichern der Datei: {e}")
+        return None
+
+    # Speichere den Bildpfad in der Datenbank
+    images = load_data(IMAGES_FILE)
+    new_id = 1
+    if images:
+        new_id = max(i['id'] for i in images) + 1
+
+    current_time = datetime.datetime.utcnow().isoformat()
+
+    new_image = {
+        'id': new_id,
+        'entry_id': entry_id,
+        'file_path': unique_filename,
+        'link_url': None,  # Explizit None setzen
+        'category': category,
+        'uploaded_at': current_time
+    }
+
+    images.append(new_image)
+    save_data(IMAGES_FILE, images)
+
     return {
         'id': new_image['id'],
         'file_path': f"/api/uploads/{new_image['file_path']}",
-        'link_url': None,
+        'link_url': None,  # Explizit None zurückgeben
         'category': new_image['category'],
         'uploaded_at': new_image['uploaded_at']
     }
