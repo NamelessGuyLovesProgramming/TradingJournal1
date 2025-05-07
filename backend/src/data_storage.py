@@ -636,6 +636,8 @@ def delete_entry(entry_id):
 
     return True
 
+# Korrigierte Funktion für data_storage.py
+
 def delete_related_entry_data(entry_ids):
     """Löscht alle mit den Einträgen verbundenen Daten."""
     if not entry_ids:
@@ -651,20 +653,44 @@ def delete_related_entry_data(entry_ids):
     to_delete = [i for i in images if i['entry_id'] in entry_ids]
 
     for img in to_delete:
-        file_path = os.path.join(UPLOADS_DIR, img['file_path'])
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except OSError as e:
-            print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
+        # Überprüfe, ob file_path existiert und nicht None ist
+        if img.get('file_path') is not None:
+            file_path = os.path.join(UPLOADS_DIR, img['file_path'])
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except OSError as e:
+                print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
+
+    images = [i for i in images if i['entry_id'] not in entry_ids]
+    save_data(IMAGES_FILE, images)# Korrigierte Funktion für data_storage.py
+
+def delete_related_entry_data(entry_ids):
+    """Löscht alle mit den Einträgen verbundenen Daten."""
+    if not entry_ids:
+        return
+
+    # Lösche Checklistenstatus
+    statuses = load_data(STATUSES_FILE)
+    statuses = [s for s in statuses if s['entry_id'] not in entry_ids]
+    save_data(STATUSES_FILE, statuses)
+
+    # Lösche Bilder und Dateien
+    images = load_data(IMAGES_FILE)
+    to_delete = [i for i in images if i['entry_id'] in entry_ids]
+
+    for img in to_delete:
+        # Überprüfe, ob file_path existiert und nicht None ist
+        if img.get('file_path') is not None:
+            file_path = os.path.join(UPLOADS_DIR, img['file_path'])
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except OSError as e:
+                print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
 
     images = [i for i in images if i['entry_id'] not in entry_ids]
     save_data(IMAGES_FILE, images)
-
-
-# Nur die neuen/geänderten Statistik-Funktionen:
-
-
 
 def get_journal_statistics(journal_id):
     """Berechnet und gibt Statistiken für ein Journal zurück."""
