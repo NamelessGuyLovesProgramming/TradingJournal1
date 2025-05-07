@@ -41,43 +41,92 @@ def init_data_files():
     }
 
     for file_path, default_data in files.items():
-        # Check if file exists and has valid content
         try:
+            # Für images.json immer ein Backup erstellen, falls die Datei existiert
+            if file_path == IMAGES_FILE and os.path.exists(file_path):
+                backup_path = f"{file_path}.bak"
+                try:
+                    # Lies den Inhalt, bevor ein Backup erstellt wird
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read().strip()
+
+                    # Wenn die Datei Inhalt hat (nicht leer und nicht nur []), erstelle ein Backup
+                    if content and content != '[]':
+                        shutil.copy2(file_path, backup_path)
+                        print(f"Backup erstellt: {backup_path}")
+                except Exception as e:
+                    print(f"Fehler beim Erstellen des Backups: {e}")
+
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read().strip()
-                    # If file is empty or not valid JSON, recreate it
+
+                # Spezielle Behandlung für images.json
+                if file_path == IMAGES_FILE:
+                    # Prüfe zuerst, ob wir ein gültiges Backup haben
+                    backup_path = f"{file_path}.bak"
+                    restore_from_backup = False
+
+                    # Wenn die Datei leer ist oder nur [] enthält, versuche eine Wiederherstellung
                     if not content or content == '[]':
-                        # For images.json specifically, try to preserve data
-                        if file_path == IMAGES_FILE:
-                            try:
-                                json.loads(content)  # Test if content is valid JSON
-                            except json.JSONDecodeError:
-                                # Only recreate if invalid JSON
-                                with open(file_path, 'w', encoding='utf-8') as f:
-                                    json.dump(default_data, f, ensure_ascii=False, indent=2)
-                        else:
-                            # For other files, recreate if empty
-                            with open(file_path, 'w', encoding='utf-8') as f:
-                                json.dump(default_data, f, ensure_ascii=False, indent=2)
+                        restore_from_backup = True
+                    else:
+                        # Versuche den Inhalt zu parsen
+                        try:
+                            data = json.loads(content)
+                            # Überprüfe, ob es ein Array ist und Elemente enthält
+                            if not isinstance(data, list):
+                                restore_from_backup = True
+                        except json.JSONDecodeError:
+                            restore_from_backup = True
+
+                    # Wiederherstellung aus Backup wenn nötig
+                    if restore_from_backup and os.path.exists(backup_path):
+                        try:
+                            with open(backup_path, 'r', encoding='utf-8') as f:
+                                backup_content = f.read().strip()
+
+                            # Prüfe, ob das Backup gültig ist
+                            if backup_content and backup_content != '[]':
+                                try:
+                                    json.loads(backup_content)
+                                    # Backup wiederherstellen
+                                    shutil.copy2(backup_path, file_path)
+                                    print(f"images.json wurde aus Backup wiederhergestellt")
+                                    continue
+                                except json.JSONDecodeError:
+                                    print("Backup ist ungültig")
+                        except Exception as e:
+                            print(f"Fehler bei der Wiederherstellung: {e}")
+
+                    # Wenn keine Wiederherstellung möglich, initialisiere mit leerem Array
+                    if not content or content == '[]' or restore_from_backup:
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            json.dump(default_data, f, ensure_ascii=False, indent=2)
+                else:
+                    # Für andere Dateien wie bisher
+                    if not content or content == '[]':
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            json.dump(default_data, f, ensure_ascii=False, indent=2)
             else:
-                # Create file if it doesn't exist
+                # Datei existiert nicht, erstellen
                 with open(file_path, 'w', encoding='utf-8') as f:
                     json.dump(default_data, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"Error initializing {file_path}: {e}")
-            # Create a backup of the original file if it exists
+            print(f"Fehler beim Initialisieren von {file_path}: {e}")
+            # Erstelle ein Backup der Original-Datei, falls sie existiert
             if os.path.exists(file_path):
                 backup_path = f"{file_path}.bak"
                 try:
                     shutil.copy2(file_path, backup_path)
-                    print(f"Created backup at {backup_path}")
+                    print(f"Backup erstellt: {backup_path}")
                 except Exception as backup_err:
-                    print(f"Failed to create backup: {backup_err}")
+                    print(f"Fehler beim Erstellen des Backups: {backup_err}")
 
-            # Recreate the file
+            # Datei neu erstellen
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(default_data, f, ensure_ascii=False, indent=2)
+
 
 def load_data(file_path):
     """Lädt Daten aus einer JSON-Datei."""
@@ -90,12 +139,53 @@ def load_data(file_path):
 
 
 def save_data(file_path, data):
-    """Speichert Daten in einer JSON-Datei."""
+    """Speichert Daten in einer JSON-Datei mit besonderer Behandlung für images.json."""
     # Stelle sicher, dass das Verzeichnis existiert
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(data, ensure_ascii=False, indent=2, fp=f, default=json_serialize)
+    # Besondere Behandlung für images.json
+    if file_path == IMAGES_FILE:
+        # Temporäre Datei für atomares Schreiben verwenden
+        temp_file = f"{file_path}.tmp"
+
+        # Erstelle ein Backup, falls die Datei bereits existiert
+        if os.path.exists(file_path):
+            backup_path = f"{file_path}.bak"
+            try:
+                # Lies den aktuellen Inhalt
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    current_content = f.read().strip()
+
+                # Erstelle nur ein Backup, wenn die Datei nicht leer ist
+                if current_content and current_content != '[]':
+                    shutil.copy2(file_path, backup_path)
+            except Exception as e:
+                print(f"Fehler beim Erstellen des Backups: {e}")
+
+        # Daten in temporäre Datei schreiben
+        try:
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(data, ensure_ascii=False, indent=2, fp=f, default=json_serialize)
+
+            # Atomares Umbenennen, um Race-Conditions zu vermeiden
+            if os.name == 'nt' and os.path.exists(file_path):  # Windows benötigt Sonderbehandlung
+                os.replace(temp_file, file_path)  # replace ist atomarer als rename unter Windows
+            else:
+                os.rename(temp_file, file_path)
+        except Exception as e:
+            print(f"Fehler beim Speichern von images.json: {e}")
+            # Falls Fehler auftritt, Backup-Wiederherstellung versuchen
+            backup_path = f"{file_path}.bak"
+            if os.path.exists(backup_path):
+                try:
+                    shutil.copy2(backup_path, file_path)
+                    print("images.json wurde aus Backup wiederhergestellt")
+                except Exception as restore_err:
+                    print(f"Fehler bei der Wiederherstellung: {restore_err}")
+    else:
+        # Standard-Speicherung für andere Dateien
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, ensure_ascii=False, indent=2, fp=f, default=json_serialize)
 
 
 def json_serialize(obj):
