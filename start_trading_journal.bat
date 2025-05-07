@@ -13,46 +13,60 @@ set BACKEND_DIR=backend
 
 :: Check if directories exist
 if not exist "%FRONTEND_DIR%" (
-    echo Error: Frontend directory not found!
-    echo Please run this script from the root of your Trading Journal project.
+    echo Fehler: Frontend-Verzeichnis nicht gefunden!
+    echo Bitte führe dieses Skript vom Stammverzeichnis deines Trading Journal-Projekts aus.
     pause
     exit /b 1
 )
 
 if not exist "%BACKEND_DIR%" (
-    echo Error: Backend directory not found!
-    echo Please run this script from the root of your Trading Journal project.
+    echo Fehler: Backend-Verzeichnis nicht gefunden!
+    echo Bitte führe dieses Skript vom Stammverzeichnis deines Trading Journal-Projekts aus.
     pause
     exit /b 1
 )
 
-:: Start backend server in a new window
-echo Starting backend server...
-start "Trading Journal Backend" cmd /c "cd %BACKEND_DIR% && python api_only.py"
+:: Check if backend is already running
+tasklist /FI "WINDOWTITLE eq Trading Journal Backend" 2>NUL | find "cmd.exe" >NUL
+if not errorlevel 1 (
+    echo Backend läuft bereits!
+) else (
+    :: Start backend server in a new window
+    echo Starte Backend-Server...
+    start "Trading Journal Backend" cmd /c "cd %BACKEND_DIR% && python api_only.py"
+)
 
 :: Wait for backend to start
-echo Waiting for backend to initialize...
+echo Warte auf Initialisierung des Backends...
 timeout /t 3 /nobreak > nul
 
-:: Start frontend server in a new window
-echo Starting frontend server...
-start "Trading Journal Frontend" cmd /c "cd %FRONTEND_DIR% && npm start"
+:: Check if frontend is already running
+tasklist /FI "WINDOWTITLE eq Trading Journal Frontend" 2>NUL | find "cmd.exe" >NUL
+if not errorlevel 1 (
+    echo Frontend läuft bereits!
+) else (
+    :: Start frontend server in a new window without opening a browser
+    echo Starte Frontend-Server...
+    start "Trading Journal Frontend" cmd /c "cd %FRONTEND_DIR% && set BROWSER=none&& npm start"
+)
 
 :: Wait for frontend to start
-echo Waiting for frontend to initialize...
-timeout /t 5 /nobreak > nul
+echo Warte auf Initialisierung des Frontends...
+timeout /t 8 /nobreak > nul
 
-:: Open browser
-echo Opening browser to Trading Journal...
-start "" "http://localhost:3000"
+:: Create a flag file to track browser launch
+set FLAG_FILE=%TEMP%\trading_journal_browser_opened.flag
 
-echo.
-echo Trading Journal is now running!
-echo.
-echo Frontend: http://localhost:3000
-echo Backend API: http://localhost:5000
-echo.
-echo Note: Close the terminal windows to stop the servers.
-echo.
+:: Check if browser has been opened in this session
+if exist "%FLAG_FILE%" (
+    echo Browser wurde bereits geöffnet.
+) else (
+    :: Open browser and create flag file
+    echo Öffne Browser für das Trading Journal...
+    start "" "http://localhost:3000"
+    echo. > "%FLAG_FILE%"
+)
 
-pause
+:: Exit this window after launching everything
+timeout /t 2 /nobreak > nul
+exit

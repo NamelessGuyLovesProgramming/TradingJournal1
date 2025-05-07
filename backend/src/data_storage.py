@@ -27,20 +27,23 @@ STRATEGIES_FILE = os.path.join(DATA_DIR, 'strategies.json')  # Neue Datei für S
 # Initialisieren Sie die Dateien, falls sie nicht existieren
 def init_data_files():
     """Erstellt leere JSON-Dateien, falls diese noch nicht existieren."""
+    # Stelle sicher, dass die Verzeichnisse existieren
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+
     files = {
         JOURNALS_FILE: [],
         ENTRIES_FILE: [],
         TEMPLATES_FILE: [],
         STATUSES_FILE: [],
         IMAGES_FILE: [],
-        STRATEGIES_FILE: []  # Füge die neue Strategien-Datei hinzu
+        STRATEGIES_FILE: []
     }
 
     for file_path, default_data in files.items():
         if not os.path.exists(file_path):
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(default_data, f, ensure_ascii=False, indent=2)
-
 
 def load_data(file_path):
     """Lädt Daten aus einer JSON-Datei."""
@@ -54,6 +57,9 @@ def load_data(file_path):
 
 def save_data(file_path, data):
     """Speichert Daten in einer JSON-Datei."""
+    # Stelle sicher, dass das Verzeichnis existiert
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, ensure_ascii=False, indent=2, fp=f, default=json_serialize)
 
@@ -62,8 +68,10 @@ def json_serialize(obj):
     """Hilft beim Serialisieren von Datumswerten für JSON."""
     if isinstance(obj, (datetime.date, datetime.datetime)):
         return obj.isoformat()
+    # None-Werte korrekt behandeln
+    if obj is None:
+        return None
     raise TypeError(f"Type {type(obj)} not serializable")
-
 
 # Journal-Funktionen
 def get_journals():
@@ -438,30 +446,6 @@ def delete_entry(entry_id):
     return True
 
 
-def delete_related_entry_data(entry_ids):
-    """Löscht alle mit den Einträgen verbundenen Daten."""
-    if not entry_ids:
-        return
-
-    # Lösche Checklistenstatus
-    statuses = load_data(STATUSES_FILE)
-    statuses = [s for s in statuses if s['entry_id'] not in entry_ids]
-    save_data(STATUSES_FILE, statuses)
-
-    # Lösche Bilder und Dateien
-    images = load_data(IMAGES_FILE)
-    to_delete = [i for i in images if i['entry_id'] in entry_ids]
-
-    for img in to_delete:
-        file_path = os.path.join(UPLOADS_DIR, img['file_path'])
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except OSError as e:
-            print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
-
-    images = [i for i in images if i['entry_id'] not in entry_ids]
-    save_data(IMAGES_FILE, images)
 
 
 # Checklistenstatus-Funktionen
@@ -478,20 +462,23 @@ def update_checklist_status(entry_id, template_id, checked):
 
 
 def upload_image(entry_id, file=None, category="Before", link_url=None):
-    """Uploads an image or adds a link for a specific journal entry."""
-    # Handle link URLs
+    """Fügt ein Bild oder einen Link für einen bestimmten Journal-Eintrag hinzu."""
+    # Lade die vorhandenen Bilder
+    images = load_data(IMAGES_FILE)
+
+    # Neue ID erzeugen
+    new_id = 1
+    if images:
+        new_id = max(i['id'] for i in images) + 1
+
+    current_time = datetime.datetime.utcnow().isoformat()
+
+    # Link-URLs verarbeiten
     if link_url:
-        images = load_data(IMAGES_FILE)
-        new_id = 1
-        if images:
-            new_id = max(i['id'] for i in images) + 1
-
-        current_time = datetime.datetime.utcnow().isoformat()
-
         new_image = {
             'id': new_id,
             'entry_id': entry_id,
-            'file_path': None,  # Explizit None setzen
+            'file_path': None,  # Explizit auf None setzen
             'link_url': link_url,
             'category': category,
             'uploaded_at': current_time
@@ -500,43 +487,30 @@ def upload_image(entry_id, file=None, category="Before", link_url=None):
         images.append(new_image)
         save_data(IMAGES_FILE, images)
 
-        return {
-            'id': new_image['id'],
-            'file_path': None,  # Explizit None zurückgeben
-            'link_url': new_image['link_url'],
-            'category': new_image['category'],
-            'uploaded_at': new_image['uploaded_at']
-        }
+        return new_image
 
-    # Handle file uploads
+    # Datei-Uploads verarbeiten
     if not file:
         return None
 
-    # Erstelle einen eindeutigen Dateinamen
-    filename = secure_filename(file.filename)
+    # Eindeutigen Dateinamen erstellen
+    filename = file.filename
     unique_filename = f"{uuid.uuid4()}_{filename}"
     file_path = os.path.join(UPLOADS_DIR, unique_filename)
 
-    # Speichere die Datei
+    # Datei speichern
     try:
         file.save(file_path)
     except Exception as e:
         print(f"Fehler beim Speichern der Datei: {e}")
         return None
 
-    # Speichere den Bildpfad in der Datenbank
-    images = load_data(IMAGES_FILE)
-    new_id = 1
-    if images:
-        new_id = max(i['id'] for i in images) + 1
-
-    current_time = datetime.datetime.utcnow().isoformat()
-
+    # Neues Bild erstellen
     new_image = {
         'id': new_id,
         'entry_id': entry_id,
         'file_path': unique_filename,
-        'link_url': None,  # Explizit None setzen
+        'link_url': None,  # Explizit auf None setzen
         'category': category,
         'uploaded_at': current_time
     }
@@ -544,13 +518,15 @@ def upload_image(entry_id, file=None, category="Before", link_url=None):
     images.append(new_image)
     save_data(IMAGES_FILE, images)
 
+    # Bild mit API-Pfad für das Frontend zurückgeben
     return {
         'id': new_image['id'],
-        'file_path': f"/api/uploads/{new_image['file_path']}",
-        'link_url': None,  # Explizit None zurückgeben
+        'file_path': f"/api/uploads/{unique_filename}",
+        'link_url': None,
         'category': new_image['category'],
         'uploaded_at': new_image['uploaded_at']
     }
+
 
 def delete_image(image_id):
     """Löscht ein Bild und seine Datei."""
@@ -558,8 +534,8 @@ def delete_image(image_id):
     image = next((i for i in images if i['id'] == image_id), None)
 
     if image:
-        # Add a check to see if file_path exists and is not None
-        if image['file_path'] is not None:
+        # Überprüfe, ob file_path existiert und nicht None ist
+        if image.get('file_path') and image['file_path'] is not None and image['file_path'] != 'None':
             file_path = os.path.join(UPLOADS_DIR, image['file_path'])
             try:
                 if os.path.exists(file_path):
@@ -572,7 +548,6 @@ def delete_image(image_id):
         return True
 
     return False
-# Statistik-Funktionen
 
 def calculate_checklist_usage(journal_id, entries):
     """Berechnet die Nutzung von Checklistenelementen."""
@@ -636,8 +611,6 @@ def delete_entry(entry_id):
 
     return True
 
-# Korrigierte Funktion für data_storage.py
-
 def delete_related_entry_data(entry_ids):
     """Löscht alle mit den Einträgen verbundenen Daten."""
     if not entry_ids:
@@ -654,7 +627,7 @@ def delete_related_entry_data(entry_ids):
 
     for img in to_delete:
         # Überprüfe, ob file_path existiert und nicht None ist
-        if img.get('file_path') is not None:
+        if img.get('file_path') and img['file_path'] != 'None' and img['file_path'] is not None:
             file_path = os.path.join(UPLOADS_DIR, img['file_path'])
             try:
                 if os.path.exists(file_path):
@@ -662,35 +635,12 @@ def delete_related_entry_data(entry_ids):
             except OSError as e:
                 print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
 
-    images = [i for i in images if i['entry_id'] not in entry_ids]
-    save_data(IMAGES_FILE, images)# Korrigierte Funktion für data_storage.py
+    # Behalte nur die Einträge, die nicht gelöscht werden
+    remaining_images = [i for i in images if i['entry_id'] not in entry_ids]
+    save_data(IMAGES_FILE, remaining_images)
 
-def delete_related_entry_data(entry_ids):
-    """Löscht alle mit den Einträgen verbundenen Daten."""
-    if not entry_ids:
-        return
 
-    # Lösche Checklistenstatus
-    statuses = load_data(STATUSES_FILE)
-    statuses = [s for s in statuses if s['entry_id'] not in entry_ids]
-    save_data(STATUSES_FILE, statuses)
 
-    # Lösche Bilder und Dateien
-    images = load_data(IMAGES_FILE)
-    to_delete = [i for i in images if i['entry_id'] in entry_ids]
-
-    for img in to_delete:
-        # Überprüfe, ob file_path existiert und nicht None ist
-        if img.get('file_path') is not None:
-            file_path = os.path.join(UPLOADS_DIR, img['file_path'])
-            try:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-            except OSError as e:
-                print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
-
-    images = [i for i in images if i['entry_id'] not in entry_ids]
-    save_data(IMAGES_FILE, images)
 
 def get_journal_statistics(journal_id):
     """Berechnet und gibt Statistiken für ein Journal zurück."""

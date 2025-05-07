@@ -6,8 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="cf4835e3-b952-4e54-8fcf-c2b5f8c8041c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/data/images.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/images.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/data_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/data_storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/start_trading_journal.bat" beforeDir="false" afterPath="$PROJECT_DIR$/start_trading_journal.bat" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,18 +117,23 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>576</line>
+          <line>551</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>628</line>
+          <line>603</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>917</line>
+          <line>867</line>
           <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
+          <line>455</line>
+          <option name="timeStamp" value="10" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
