@@ -29,10 +29,12 @@ def serve_upload(filename):
         return jsonify({"error": "Ungültiger Dateipfad"}), 400
     return send_from_directory(upload_dir, filename)
 
+
 if __name__ == '__main__':
     # Initialisiere die Datenbanken
     from src.data_storage import init_data_files
+
     init_data_files()
-    
+
     print("API-Server läuft auf http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)

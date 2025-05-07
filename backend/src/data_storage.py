@@ -26,7 +26,7 @@ STRATEGIES_FILE = os.path.join(DATA_DIR, 'strategies.json')  # Neue Datei für S
 
 # Initialisieren Sie die Dateien, falls sie nicht existieren
 def init_data_files():
-    """Erstellt leere JSON-Dateien, falls diese noch nicht existieren."""
+    """Erstellt leere JSON-Dateien, falls diese noch nicht existieren oder leer/beschädigt sind."""
     # Stelle sicher, dass die Verzeichnisse existieren
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(UPLOADS_DIR, exist_ok=True)
@@ -41,7 +41,41 @@ def init_data_files():
     }
 
     for file_path, default_data in files.items():
-        if not os.path.exists(file_path):
+        # Check if file exists and has valid content
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                    # If file is empty or not valid JSON, recreate it
+                    if not content or content == '[]':
+                        # For images.json specifically, try to preserve data
+                        if file_path == IMAGES_FILE:
+                            try:
+                                json.loads(content)  # Test if content is valid JSON
+                            except json.JSONDecodeError:
+                                # Only recreate if invalid JSON
+                                with open(file_path, 'w', encoding='utf-8') as f:
+                                    json.dump(default_data, f, ensure_ascii=False, indent=2)
+                        else:
+                            # For other files, recreate if empty
+                            with open(file_path, 'w', encoding='utf-8') as f:
+                                json.dump(default_data, f, ensure_ascii=False, indent=2)
+            else:
+                # Create file if it doesn't exist
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(default_data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Error initializing {file_path}: {e}")
+            # Create a backup of the original file if it exists
+            if os.path.exists(file_path):
+                backup_path = f"{file_path}.bak"
+                try:
+                    shutil.copy2(file_path, backup_path)
+                    print(f"Created backup at {backup_path}")
+                except Exception as backup_err:
+                    print(f"Failed to create backup: {backup_err}")
+
+            # Recreate the file
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(default_data, f, ensure_ascii=False, indent=2)
 

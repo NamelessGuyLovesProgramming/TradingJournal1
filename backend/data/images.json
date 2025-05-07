@@ -1,10 +1,10 @@
 [
   {
     "id": 1,
-    "entry_id": 37,
+    "entry_id": 39,
     "file_path": null,
-    "link_url": "https://www.tradingview.com/x/uS1v25s1/",
-    "category": "After",
-    "uploaded_at": "2025-05-07T15:01:14.234174"
+    "link_url": "http://localhost:3000/journals/1/entries/39",
+    "category": "Before",
+    "uploaded_at": "2025-05-07T16:32:10.597380"
   }
-]]
+]
