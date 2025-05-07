@@ -196,5 +196,11 @@
     "journal_id": 2,
     "text": "Momentum",
     "order": 14
+  },
+  {
+    "id": 34,
+    "journal_id": 1,
+    "text": "AMD-Pattern",
+    "order": 18
   }
 ]

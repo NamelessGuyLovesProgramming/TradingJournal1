@@ -54,25 +54,25 @@ const tradingEmotions = [
 ];
 
 const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
-  const [formData, setFormData] = useState({
-    entry_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    end_date: '',
-    symbol: '',
-    position_type: '',
-    strategy: '',
-    initial_rr: '',
-    risk_percentage: '',
-    pnl: '',
-    result: '',
-    confidence_level: 50,
-    trade_rating: 3,
-    notes: '',
-    stop_loss: '',
-    take_profit: '',
-    custom_field_value: '',
-    emotion: '',
-    checklist_statuses: {}
-  });
+const [formData, setFormData] = useState({
+  entry_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+  end_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), // Set end_date to match entry_date initially
+  symbol: '',
+  position_type: '',
+  strategy: '',
+  initial_rr: '',
+  risk_percentage: '',
+  pnl: '',
+  result: '',
+  confidence_level: 50,
+  trade_rating: 3,
+  notes: '',
+  stop_loss: '',
+  take_profit: '',
+  custom_field_value: '',
+  emotion: '',
+  checklist_statuses: {}
+});
 
   const [strategies, setStrategies] = useState([]);
   const [newStrategy, setNewStrategy] = useState('');
@@ -173,24 +173,22 @@ const EntryForm = ({ journalId, entryId, journalSettings, onComplete }) => {
     fetchData();
   }, [journalId]);
 
-// Locate the handleChange function in EntryForm.js and modify it:
 const handleChange = (e) => {
   const { name, value } = e.target;
 
-  // Update the form data with the new value
-  setFormData({
-    ...formData,
-    [name]: value,
-  });
-
-  // If entry_date (Start Date & Time) is being changed and end_date is empty,
-  // automatically update end_date to match the entry_date
-  if (name === 'entry_date' && !formData.end_date) {
-    setFormData(prevData => ({
-      ...prevData,
+  if (name === 'entry_date') {
+    // When entry_date changes, update both entry_date and end_date
+    setFormData({
+      ...formData,
+      entry_date: value,
+      end_date: value // Always update end_date to match entry_date
+    });
+  } else {
+    // For other fields, just update that specific field
+    setFormData({
+      ...formData,
       [name]: value,
-      end_date: value // Set end_date to the same value as entry_date
-    }));
+    });
   }
 };
 
