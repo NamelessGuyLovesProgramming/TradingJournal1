@@ -1,19 +1,35 @@
-# src/data_storage.py - Aktualisierte Version mit neuen Feldern
+# src/data_storage.py - Vollständig überarbeitete Version mit robustem Speichermechanismus
 
 import os
 import json
 import datetime
 import uuid
-from pathlib import Path
 import shutil
+import time
+import threading
+import logging
+from pathlib import Path
+
+# Logger einrichten
+logging.basicConfig(
+    filename='trading_journal.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# Globale Sperre für Dateioperationen
+file_locks = {}
+LOCK_TIMEOUT = 30  # Timeout in Sekunden
 
 # Basispfad für die Datenspeicherung
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 UPLOADS_DIR = os.path.join(DATA_DIR, 'uploads')
+BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
 
 # Stellen Sie sicher, dass die Verzeichnisse existieren
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
+os.makedirs(BACKUP_DIR, exist_ok=True)
 
 # Pfade zu JSON-Dateien
 JOURNALS_FILE = os.path.join(DATA_DIR, 'journals.json')
@@ -21,171 +37,104 @@ ENTRIES_FILE = os.path.join(DATA_DIR, 'entries.json')
 TEMPLATES_FILE = os.path.join(DATA_DIR, 'templates.json')
 STATUSES_FILE = os.path.join(DATA_DIR, 'statuses.json')
 IMAGES_FILE = os.path.join(DATA_DIR, 'images.json')
-STRATEGIES_FILE = os.path.join(DATA_DIR, 'strategies.json')  # Neue Datei für Strategien
+STRATEGIES_FILE = os.path.join(DATA_DIR, 'strategies.json')
 
 
-# Initialisieren Sie die Dateien, falls sie nicht existieren
-def init_data_files():
-    """Erstellt leere JSON-Dateien, falls diese noch nicht existieren oder leer/beschädigt sind."""
-    # Stelle sicher, dass die Verzeichnisse existieren
-    os.makedirs(DATA_DIR, exist_ok=True)
-    os.makedirs(UPLOADS_DIR, exist_ok=True)
+# Sperrfunktionen für Dateioperationen
+def acquire_lock(file_path, timeout=LOCK_TIMEOUT):
+    """Erwirbt eine Sperre für die angegebene Datei"""
+    if file_path not in file_locks:
+        file_locks[file_path] = threading.Lock()
 
-    files = {
-        JOURNALS_FILE: [],
-        ENTRIES_FILE: [],
-        TEMPLATES_FILE: [],
-        STATUSES_FILE: [],
-        IMAGES_FILE: [],
-        STRATEGIES_FILE: []
-    }
+    lock = file_locks[file_path]
+    start_time = time.time()
 
-    for file_path, default_data in files.items():
+    while time.time() - start_time < timeout:
+        if lock.acquire(blocking=False):
+            return True
+        time.sleep(0.1)
+
+    logging.error(f"Timeout beim Erwerb der Sperre für {file_path}")
+    return False
+
+
+def release_lock(file_path):
+    """Gibt die Sperre für die angegebene Datei frei"""
+    if file_path in file_locks:
         try:
-            # Für images.json immer ein Backup erstellen, falls die Datei existiert
-            if file_path == IMAGES_FILE and os.path.exists(file_path):
-                backup_path = f"{file_path}.bak"
-                try:
-                    # Lies den Inhalt, bevor ein Backup erstellt wird
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read().strip()
-
-                    # Wenn die Datei Inhalt hat (nicht leer und nicht nur []), erstelle ein Backup
-                    if content and content != '[]':
-                        shutil.copy2(file_path, backup_path)
-                        print(f"Backup erstellt: {backup_path}")
-                except Exception as e:
-                    print(f"Fehler beim Erstellen des Backups: {e}")
-
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-
-                # Spezielle Behandlung für images.json
-                if file_path == IMAGES_FILE:
-                    # Prüfe zuerst, ob wir ein gültiges Backup haben
-                    backup_path = f"{file_path}.bak"
-                    restore_from_backup = False
-
-                    # Wenn die Datei leer ist oder nur [] enthält, versuche eine Wiederherstellung
-                    if not content or content == '[]':
-                        restore_from_backup = True
-                    else:
-                        # Versuche den Inhalt zu parsen
-                        try:
-                            data = json.loads(content)
-                            # Überprüfe, ob es ein Array ist und Elemente enthält
-                            if not isinstance(data, list):
-                                restore_from_backup = True
-                        except json.JSONDecodeError:
-                            restore_from_backup = True
-
-                    # Wiederherstellung aus Backup wenn nötig
-                    if restore_from_backup and os.path.exists(backup_path):
-                        try:
-                            with open(backup_path, 'r', encoding='utf-8') as f:
-                                backup_content = f.read().strip()
-
-                            # Prüfe, ob das Backup gültig ist
-                            if backup_content and backup_content != '[]':
-                                try:
-                                    json.loads(backup_content)
-                                    # Backup wiederherstellen
-                                    shutil.copy2(backup_path, file_path)
-                                    print(f"images.json wurde aus Backup wiederhergestellt")
-                                    continue
-                                except json.JSONDecodeError:
-                                    print("Backup ist ungültig")
-                        except Exception as e:
-                            print(f"Fehler bei der Wiederherstellung: {e}")
-
-                    # Wenn keine Wiederherstellung möglich, initialisiere mit leerem Array
-                    if not content or content == '[]' or restore_from_backup:
-                        with open(file_path, 'w', encoding='utf-8') as f:
-                            json.dump(default_data, f, ensure_ascii=False, indent=2)
-                else:
-                    # Für andere Dateien wie bisher
-                    if not content or content == '[]':
-                        with open(file_path, 'w', encoding='utf-8') as f:
-                            json.dump(default_data, f, ensure_ascii=False, indent=2)
-            else:
-                # Datei existiert nicht, erstellen
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(default_data, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"Fehler beim Initialisieren von {file_path}: {e}")
-            # Erstelle ein Backup der Original-Datei, falls sie existiert
-            if os.path.exists(file_path):
-                backup_path = f"{file_path}.bak"
-                try:
-                    shutil.copy2(file_path, backup_path)
-                    print(f"Backup erstellt: {backup_path}")
-                except Exception as backup_err:
-                    print(f"Fehler beim Erstellen des Backups: {backup_err}")
-
-            # Datei neu erstellen
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(default_data, f, ensure_ascii=False, indent=2)
+            file_locks[file_path].release()
+        except RuntimeError:
+            # Sperre war nicht erworben
+            pass
 
 
-def load_data(file_path):
-    """Lädt Daten aus einer JSON-Datei."""
+# Funktion zum Erstellen eines Backups
+def create_backup(file_path):
+    """Erstellt ein Backup der angegebenen Datei"""
+    if not os.path.exists(file_path):
+        return False
+
     try:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = os.path.basename(file_path)
+        backup_filename = f"{filename}_{timestamp}.bak"
+        backup_path = os.path.join(BACKUP_DIR, backup_filename)
+
+        # Validiere die Quelldatei
         with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Falls die Datei nicht existiert oder beschädigt ist
-        return []
+            content = f.read().strip()
+
+        if not content or content == '[]':
+            logging.warning(f"Keine Daten zum Sichern in {file_path}")
+            return False
+
+        # Überprüfe, ob die Datei gültiges JSON enthält
+        json.loads(content)
+
+        # Erstelle das Backup
+        shutil.copy2(file_path, backup_path)
+        logging.info(f"Backup erstellt: {backup_path}")
+        return True
+    except Exception as e:
+        logging.error(f"Fehler beim Erstellen des Backups für {file_path}: {e}")
+        return False
 
 
-def save_data(file_path, data):
-    """Speichert Daten in einer JSON-Datei mit besonderer Behandlung für images.json."""
-    # Stelle sicher, dass das Verzeichnis existiert
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+# Funktion zum Wiederherstellen aus Backup
+def restore_from_backup(file_path):
+    """Versucht, eine Datei aus dem letzten Backup wiederherzustellen"""
+    filename = os.path.basename(file_path)
+    backup_files = [f for f in os.listdir(BACKUP_DIR) if f.startswith(filename) and f.endswith('.bak')]
 
-    # Besondere Behandlung für images.json
-    if file_path == IMAGES_FILE:
-        # Temporäre Datei für atomares Schreiben verwenden
-        temp_file = f"{file_path}.tmp"
+    if not backup_files:
+        logging.warning(f"Keine Backup-Dateien für {file_path} gefunden")
+        return False
 
-        # Erstelle ein Backup, falls die Datei bereits existiert
-        if os.path.exists(file_path):
-            backup_path = f"{file_path}.bak"
-            try:
-                # Lies den aktuellen Inhalt
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    current_content = f.read().strip()
+    # Sortiere nach Erstellungszeit (neueste zuerst)
+    backup_files.sort(reverse=True)
 
-                # Erstelle nur ein Backup, wenn die Datei nicht leer ist
-                if current_content and current_content != '[]':
-                    shutil.copy2(file_path, backup_path)
-            except Exception as e:
-                print(f"Fehler beim Erstellen des Backups: {e}")
-
-        # Daten in temporäre Datei schreiben
+    for backup_file in backup_files:
+        backup_path = os.path.join(BACKUP_DIR, backup_file)
         try:
-            with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(data, ensure_ascii=False, indent=2, fp=f, default=json_serialize)
+            # Validiere das Backup
+            with open(backup_path, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
 
-            # Atomares Umbenennen, um Race-Conditions zu vermeiden
-            if os.name == 'nt' and os.path.exists(file_path):  # Windows benötigt Sonderbehandlung
-                os.replace(temp_file, file_path)  # replace ist atomarer als rename unter Windows
-            else:
-                os.rename(temp_file, file_path)
+            if not content or content == '[]':
+                continue
+
+            # Überprüfe, ob die Datei gültiges JSON enthält
+            json.loads(content)
+
+            # Stelle aus dem Backup wieder her
+            shutil.copy2(backup_path, file_path)
+            logging.info(f"Wiederherstellung aus Backup erfolgreich: {backup_path}")
+            return True
         except Exception as e:
-            print(f"Fehler beim Speichern von images.json: {e}")
-            # Falls Fehler auftritt, Backup-Wiederherstellung versuchen
-            backup_path = f"{file_path}.bak"
-            if os.path.exists(backup_path):
-                try:
-                    shutil.copy2(backup_path, file_path)
-                    print("images.json wurde aus Backup wiederhergestellt")
-                except Exception as restore_err:
-                    print(f"Fehler bei der Wiederherstellung: {restore_err}")
-    else:
-        # Standard-Speicherung für andere Dateien
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, ensure_ascii=False, indent=2, fp=f, default=json_serialize)
+            logging.error(f"Fehler bei der Wiederherstellung aus {backup_path}: {e}")
+
+    logging.error(f"Alle Wiederherstellungsversuche für {file_path} fehlgeschlagen")
+    return False
 
 
 def json_serialize(obj):
@@ -196,6 +145,229 @@ def json_serialize(obj):
     if obj is None:
         return None
     raise TypeError(f"Type {type(obj)} not serializable")
+
+
+def safe_load_data(file_path, max_retry=3):
+    """Lädt Daten sicher aus einer JSON-Datei mit Wiederholungsversuchen und Backup-Wiederherstellung."""
+    if not acquire_lock(file_path):
+        logging.error(f"Konnte keine Sperre für {file_path} erwerben")
+        return []
+
+    try:
+        retry_count = 0
+        while retry_count < max_retry:
+            try:
+                if not os.path.exists(file_path):
+                    logging.warning(f"Datei {file_path} existiert nicht, erstelle leere Liste")
+                    return []
+
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+
+                if not content:
+                    logging.warning(f"Datei {file_path} ist leer, erstelle leere Liste")
+                    return []
+
+                data = json.loads(content)
+
+                # Überprüfe, ob es eine Liste ist
+                if not isinstance(data, list):
+                    raise ValueError(f"Daten in {file_path} sind keine Liste")
+
+                return data
+
+            except json.JSONDecodeError as e:
+                logging.error(f"JSON-Fehler beim Lesen von {file_path}: {e}")
+                retry_count += 1
+
+                if retry_count < max_retry:
+                    logging.info(f"Versuche Wiederherstellung aus Backup für {file_path}")
+                    if restore_from_backup(file_path):
+                        continue
+                    else:
+                        logging.warning(f"Erstelle neue leere Datei für {file_path}")
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write('[]')
+                        return []
+
+            except Exception as e:
+                logging.error(f"Fehler beim Lesen von {file_path}: {e}")
+                retry_count += 1
+
+                if retry_count < max_retry:
+                    time.sleep(0.5)  # Kleine Pause vor dem nächsten Versuch
+                    continue
+                else:
+                    logging.error(f"Maximale Anzahl von Versuchen für {file_path} erreicht")
+                    return []
+
+        return []
+
+    finally:
+        release_lock(file_path)
+
+
+def safe_save_data(file_path, data, create_backup_copy=False):
+    """Speichert Daten sicher in einer JSON-Datei mit verbesserter Fehlerbehandlung."""
+    if not acquire_lock(file_path):
+        logging.error(f"Konnte keine Sperre für {file_path} erwerben")
+        return False
+
+    try:
+        # Überprüfe Datentyp
+        if not isinstance(data, list):
+            logging.error(f"Daten für {file_path} sind keine Liste")
+            return False
+
+        # Erstelle das Verzeichnis, falls es nicht existiert
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        # Erstelle ein Backup der aktuellen Datei, falls gewünscht
+        if create_backup_copy and os.path.exists(file_path):
+            create_backup(file_path)
+
+        # Temporäre Datei für atomares Schreiben
+        temp_file = f"{file_path}.tmp"
+
+        # Daten in temporäre Datei schreiben
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            json_text = json.dumps(data, ensure_ascii=False, indent=2, default=json_serialize)
+            f.write(json_text)
+
+        # Überprüfe, ob die Daten korrekt geschrieben wurden
+        try:
+            with open(temp_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            json.loads(content)  # Validiere JSON
+        except Exception as e:
+            logging.error(f"Fehler beim Validieren der temporären Datei: {e}")
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            return False
+
+        # Atomares Umbenennen
+        try:
+            if os.name == 'nt' and os.path.exists(file_path):  # Windows benötigt Sonderbehandlung
+                os.replace(temp_file, file_path)
+            else:
+                os.rename(temp_file, file_path)
+        except Exception as e:
+            logging.error(f"Fehler beim atomaren Umbenennen: {e}")
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            return False
+
+        # Überprüfe Integrität der geschriebenen Datei
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                file_content = f.read()
+            if not file_content or file_content.strip() == '':
+                logging.error(f"Datei {file_path} ist nach dem Schreiben leer")
+                return restore_from_backup(file_path)
+
+            # Versuche JSON zu parsen
+            json.loads(file_content)
+            logging.info(f"Daten erfolgreich gespeichert in {file_path}")
+            return True
+
+        except Exception as e:
+            logging.error(f"Fehler bei der Integritätsprüfung: {e}")
+            return restore_from_backup(file_path)
+
+    except Exception as e:
+        logging.error(f"Unerwarteter Fehler beim Speichern in {file_path}: {e}")
+        return False
+
+    finally:
+        release_lock(file_path)
+
+
+# Automatisches Backup für wichtige Dateien
+def schedule_backups():
+    """Plant regelmäßige Backups wichtiger Dateien"""
+    files_to_backup = [JOURNALS_FILE, ENTRIES_FILE, IMAGES_FILE, TEMPLATES_FILE, STATUSES_FILE, STRATEGIES_FILE]
+
+    for file_path in files_to_backup:
+        if os.path.exists(file_path):
+            create_backup(file_path)
+
+    # Plant das nächste Backup in 30 Minuten
+    threading.Timer(1800, schedule_backups).start()
+
+
+# Initialisierung der Dateien
+def init_data_files():
+    """Erstellt und validiert die JSON-Datendateien."""
+    logging.info("Initialisiere Datendateien...")
+
+    files = {
+        JOURNALS_FILE: [],
+        ENTRIES_FILE: [],
+        TEMPLATES_FILE: [],
+        STATUSES_FILE: [],
+        IMAGES_FILE: [],
+        STRATEGIES_FILE: []
+    }
+
+    # Stelle sicher, dass alle Verzeichnisse existieren
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+
+    for file_path, default_data in files.items():
+        # Prüfe, ob die Datei existiert
+        if os.path.exists(file_path):
+            # Prüfe, ob die Datei gültiges JSON enthält
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+
+                if content and content != '[]':
+                    # Versuche das JSON zu parsen
+                    json.loads(content)
+                    logging.info(f"Datei {file_path} ist gültig")
+
+                    # Erstelle ein Backup, wenn die Datei gültig ist (besonders für images.json)
+                    if file_path == IMAGES_FILE:
+                        create_backup(file_path)
+                else:
+                    logging.warning(f"Datei {file_path} ist leer, initialisiere mit Standarddaten")
+                    safe_save_data(file_path, default_data)
+
+            except json.JSONDecodeError:
+                logging.error(f"Datei {file_path} enthält ungültiges JSON")
+
+                # Bei images.json versuchen wir eine Wiederherstellung aus dem Backup
+                if file_path == IMAGES_FILE and not restore_from_backup(file_path):
+                    logging.warning(
+                        f"Konnte {file_path} nicht aus Backup wiederherstellen, initialisiere mit leerer Liste")
+                    safe_save_data(file_path, default_data)
+                else:
+                    # Für andere Dateien initialisieren wir mit Standarddaten
+                    safe_save_data(file_path, default_data)
+
+        else:
+            # Datei existiert nicht, erstellen
+            logging.info(f"Erstelle neue Datei {file_path}")
+            safe_save_data(file_path, default_data)
+
+    # Starte regelmäßige Backups
+    schedule_backups()
+    logging.info("Datei-Initialisierung abgeschlossen")
+
+
+# Ersatz für ursprüngliche Funktionen
+def load_data(file_path):
+    """Lädt Daten aus einer JSON-Datei."""
+    return safe_load_data(file_path)
+
+
+def save_data(file_path, data):
+    """Speichert Daten in einer JSON-Datei."""
+    # Für images.json immer ein Backup erstellen
+    create_backup_copy = (file_path == IMAGES_FILE)
+    return safe_save_data(file_path, data, create_backup_copy)
+
 
 # Journal-Funktionen
 def get_journals():
@@ -261,6 +433,7 @@ def create_journal(data):
         save_data(TEMPLATES_FILE, templates)
 
     return new_journal
+
 
 def update_journal(journal_id, data):
     """Aktualisiert ein bestehendes Journal."""
@@ -451,6 +624,7 @@ def get_entry(entry_id):
 
     return entry
 
+
 def create_entry(journal_id, data):
     """Erstellt einen neuen Eintrag."""
     entries = load_data(ENTRIES_FILE)
@@ -570,8 +744,6 @@ def delete_entry(entry_id):
     return True
 
 
-
-
 # Checklistenstatus-Funktionen
 def update_checklist_status(entry_id, template_id, checked):
     """Aktualisiert den Status eines Checklistenelements."""
@@ -626,7 +798,7 @@ def upload_image(entry_id, file=None, category="Before", link_url=None):
     try:
         file.save(file_path)
     except Exception as e:
-        print(f"Fehler beim Speichern der Datei: {e}")
+        logging.error(f"Fehler beim Speichern der Datei: {e}")
         return None
 
     # Neues Bild erstellen
@@ -665,13 +837,14 @@ def delete_image(image_id):
                 if os.path.exists(file_path):
                     os.remove(file_path)
             except OSError as e:
-                print(f"Fehler beim Löschen der Bilddatei {image['file_path']}: {e}")
+                logging.error(f"Fehler beim Löschen der Bilddatei {image['file_path']}: {e}")
 
         images = [i for i in images if i['id'] != image_id]
         save_data(IMAGES_FILE, images)
         return True
 
     return False
+
 
 def calculate_checklist_usage(journal_id, entries):
     """Berechnet die Nutzung von Checklistenelementen."""
@@ -700,41 +873,6 @@ def calculate_checklist_usage(journal_id, entries):
     return results
 
 
-
-
-
-def delete_journal(journal_id):
-    """Löscht ein Journal und alle zugehörigen Daten."""
-    journals = load_data(JOURNALS_FILE)
-    journals = [j for j in journals if j['id'] != journal_id]
-    save_data(JOURNALS_FILE, journals)
-
-    # Lösche zugehörige Vorlagen
-    templates = load_data(TEMPLATES_FILE)
-    templates = [t for t in templates if t['journal_id'] != journal_id]
-    save_data(TEMPLATES_FILE, templates)
-
-    # Finde Einträge, die zum Journal gehören
-    entries = load_data(ENTRIES_FILE)
-    entry_ids = [e['id'] for e in entries if e['journal_id'] == journal_id]
-    entries = [e for e in entries if e['journal_id'] != journal_id]
-    save_data(ENTRIES_FILE, entries)
-
-    # Lösche Checklistenstatus und Bilder für die Einträge
-    delete_related_entry_data(entry_ids)
-
-    return True
-
-def delete_entry(entry_id):
-    """Löscht einen Eintrag und zugehörige Daten."""
-    entries = load_data(ENTRIES_FILE)
-    entries = [e for e in entries if e['id'] != entry_id]
-    save_data(ENTRIES_FILE, entries)
-
-    delete_related_entry_data([entry_id])
-
-    return True
-
 def delete_related_entry_data(entry_ids):
     """Löscht alle mit den Einträgen verbundenen Daten."""
     if not entry_ids:
@@ -757,13 +895,11 @@ def delete_related_entry_data(entry_ids):
                 if os.path.exists(file_path):
                     os.remove(file_path)
             except OSError as e:
-                print(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
+                logging.error(f"Fehler beim Löschen der Bilddatei {img['file_path']}: {e}")
 
     # Behalte nur die Einträge, die nicht gelöscht werden
     remaining_images = [i for i in images if i['entry_id'] not in entry_ids]
     save_data(IMAGES_FILE, remaining_images)
-
-
 
 
 def get_journal_statistics(journal_id):
@@ -1292,6 +1428,7 @@ def calculate_checklist_win_rates(journal_id, entries):
 
     return results
 
+
 def calculate_emotion_performance(entries):
     """Berechnet die Performance nach emotionalen Zuständen."""
     emotion_data = {}
@@ -1346,5 +1483,6 @@ def calculate_emotion_performance(entries):
 
     return results
 
-# Initialisierung
+
+# Initialisierung beim Import des Moduls
 init_data_files()

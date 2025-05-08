@@ -5,9 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf4835e3-b952-4e54-8fcf-c2b5f8c8041c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/backend/data/backups/entries.json_20250508_114924.bak" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/data/backups/images.json_20250508_114924.bak" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/data/backups/journals.json_20250508_114924.bak" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/data/backups/statuses.json_20250508_114924.bak" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/data/backups/strategies.json_20250508_114924.bak" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/data/backups/templates.json_20250508_114924.bak" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/restore_images.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/entries.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/entries.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/images.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/images.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/data/images.json.bak" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/images.json.bak" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/data/statuses.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/data/statuses.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/data_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/data_storage.py" afterDir="false" />
     </list>
@@ -119,22 +127,22 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>675</line>
+          <line>848</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>727</line>
+          <line>875</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>991</line>
+          <line>1127</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/backend/src/data_storage.py</url>
-          <line>579</line>
+          <line>751</line>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
       </breakpoints>
