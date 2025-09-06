@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "journal_id": 5,
+    "text": "Season Breakout",
+    "order": 0
+  },
+  {
+    "id": 2,
+    "journal_id": 5,
+    "text": "5min iFVG",
+    "order": 1
+  },
+  {
+    "id": 3,
+    "journal_id": 5,
+    "text": "15min iFVG",
+    "order": 2
+  },
+  {
+    "id": 4,
+    "journal_id": 5,
+    "text": "1min iFVG-Muster",
+    "order": 3
+  },
+  {
+    "id": 5,
+    "journal_id": 5,
+    "text": "5 min FVG Respect",
+    "order": 4
+  },
+  {
+    "id": 6,
+    "journal_id": 5,
+    "text": "15 min FVG Respect",
+    "order": 5
+  },
+  {
+    "id": 7,
+    "journal_id": 5,
+    "text": "30 min FVG Respect",
+    "order": 6
+  },
+  {
+    "id": 8,
+    "journal_id": 5,
+    "text": "1H FVG Respect",
+    "order": 7
+  },
+  {
+    "id": 9,
+    "journal_id": 5,
+    "text": "4H FVG Respect",
+    "order": 8
+  },
+  {
+    "id": 10,
+    "journal_id": 5,
+    "text": "1min BoS",
+    "order": 9
+  },
+  {
+    "id": 11,
+    "journal_id": 5,
+    "text": "5min BoS",
+    "order": 10
+  },
+  {
+    "id": 12,
+    "journal_id": 5,
+    "text": "15min BoS",
+    "order": 11
+  },
+  {
+    "id": 13,
+    "journal_id": 5,
+    "text": "Season Sweep",
+    "order": 12
+  }
+]

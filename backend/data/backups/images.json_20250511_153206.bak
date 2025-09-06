@@ -1,0 +1,138 @@
+[
+  {
+    "id": 1,
+    "entry_id": 42,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/Duyc8Zdn/",
+    "category": "After",
+    "uploaded_at": "2025-05-07T19:50:11.294314"
+  },
+  {
+    "id": 2,
+    "entry_id": 43,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/As6CLK1U/",
+    "category": "Before",
+    "uploaded_at": "2025-05-07T21:37:48.187583"
+  },
+  {
+    "id": 3,
+    "entry_id": 48,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/Riua4HrY/",
+    "category": "Before",
+    "uploaded_at": "2025-05-08T10:12:24.163078"
+  },
+  {
+    "id": 4,
+    "entry_id": 48,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/Riua4HrY/",
+    "category": "After",
+    "uploaded_at": "2025-05-08T10:12:24.263101"
+  },
+  {
+    "id": 5,
+    "entry_id": 49,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/Mg89bmm1/",
+    "category": "Before",
+    "uploaded_at": "2025-05-08T12:06:37.947852"
+  },
+  {
+    "id": 6,
+    "entry_id": 49,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/1UzkI8ME/",
+    "category": "After",
+    "uploaded_at": "2025-05-08T12:06:38.048860"
+  },
+  {
+    "id": 7,
+    "entry_id": 50,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/qd8UPIeT/",
+    "category": "Before",
+    "uploaded_at": "2025-05-08T13:17:46.554019"
+  },
+  {
+    "id": 8,
+    "entry_id": 50,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/SP3iolEh/",
+    "category": "After",
+    "uploaded_at": "2025-05-08T13:18:07.400270"
+  },
+  {
+    "id": 9,
+    "entry_id": 51,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/sI2axIk8/",
+    "category": "After",
+    "uploaded_at": "2025-05-08T14:28:46.843313"
+  },
+  {
+    "id": 10,
+    "entry_id": 52,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/B49lVUGT/",
+    "category": "Before",
+    "uploaded_at": "2025-05-08T21:06:05.386606"
+  },
+  {
+    "id": 11,
+    "entry_id": 52,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/EqpSGOEr/",
+    "category": "After",
+    "uploaded_at": "2025-05-08T21:06:05.487521"
+  },
+  {
+    "id": 12,
+    "entry_id": 53,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/r4dsGejV/",
+    "category": "Before",
+    "uploaded_at": "2025-05-08T22:11:17.535969"
+  },
+  {
+    "id": 13,
+    "entry_id": 53,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/A6fa5VrB/",
+    "category": "After",
+    "uploaded_at": "2025-05-08T22:11:17.635991"
+  },
+  {
+    "id": 14,
+    "entry_id": 54,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/EITYcd8j/",
+    "category": "Before",
+    "uploaded_at": "2025-05-08T23:39:41.775034"
+  },
+  {
+    "id": 15,
+    "entry_id": 55,
+    "file_path": null,
+    "link_url": ": -225,18",
+    "category": "Before",
+    "uploaded_at": "2025-05-09T00:50:13.348142"
+  },
+  {
+    "id": 16,
+    "entry_id": 55,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/IiFjsPlh/",
+    "category": "After",
+    "uploaded_at": "2025-05-09T00:50:13.447806"
+  },
+  {
+    "id": 17,
+    "entry_id": 56,
+    "file_path": null,
+    "link_url": "https://www.tradingview.com/x/bfzLatnO/",
+    "category": "After",
+    "uploaded_at": "2025-05-09T00:54:15.923068"
+  }
+]

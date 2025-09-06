@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "name": "Backtest Journal",
+    "description": "",
+    "has_sl_tp_fields": false,
+    "has_custom_field": false,
+    "custom_field_name": "",
+    "custom_field_options": [],
+    "has_emotions": true,
+    "created_at": "2025-05-03T21:49:51.938346"
+  },
+  {
+    "id": 2,
+    "name": "Real Journal",
+    "description": "",
+    "has_sl_tp_fields": false,
+    "has_custom_field": false,
+    "custom_field_name": "",
+    "custom_field_options": [],
+    "has_emotions": true,
+    "created_at": "2025-05-05T11:43:32.643609"
+  }
+]
