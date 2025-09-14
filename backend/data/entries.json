@@ -18,5 +18,25 @@
     "take_profit": "",
     "custom_field_value": "",
     "emotion": "Euphoria"
+  },
+  {
+    "id": 2,
+    "journal_id": 5,
+    "entry_date": "2025-09-14T15:32",
+    "end_date": "2025-09-14T15:32",
+    "symbol": "",
+    "position_type": "",
+    "strategy": "",
+    "initial_rr": "",
+    "risk_percentage": "",
+    "pnl": "",
+    "result": "Loss",
+    "confidence_level": 50,
+    "trade_rating": 3,
+    "notes": "",
+    "stop_loss": "",
+    "take_profit": "",
+    "custom_field_value": "",
+    "emotion": ""
   }
 ]
